@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Terminal, Key, Play, Globe, CheckCircle2, AlertCircle, RefreshCw, Search, Sparkles, Copy, Download, Save, Check, Filter, Layers } from 'lucide-react';
+import { Terminal, Key, Play, Globe, CheckCircle2, AlertCircle, RefreshCw, Search, Sparkles, Copy, Download, Save, Check, Filter, Layers, Gift } from 'lucide-react';
 import { DEFAULT_MODELS } from '../data/modelsConfig';
-import { runModelPrompt, fetchOpenRouterModels, checkModelGroundingSupport } from '../services/openRouterApi';
+import { runModelPrompt, fetchOpenRouterModels, checkModelGroundingSupport, checkModelIsFree } from '../services/openRouterApi';
 import { getStoredApiKey, saveStoredApiKey, saveToDiskFile } from '../services/storage';
 
 export default function DevOpenRouterStudio({ candidatesData = [], onAddCustomCandidate }) {
@@ -9,6 +9,7 @@ export default function DevOpenRouterStudio({ candidatesData = [], onAddCustomCa
   const [searchQuery, setSearchQuery] = useState('');
   const [companyFilter, setCompanyFilter] = useState('ALL');
   const [groundingFilter, setGroundingFilter] = useState('ALL'); // 'ALL' | 'GROUNDED' | 'UNGROUNDED'
+  const [priceFilter, setPriceFilter] = useState('ALL'); // 'ALL' | 'FREE_ONLY' | 'PAID_ONLY'
   
   const [availableModels, setAvailableModels] = useState(DEFAULT_MODELS);
   const [fetchingModels, setFetchingModels] = useState(false);
@@ -23,7 +24,7 @@ export default function DevOpenRouterStudio({ candidatesData = [], onAddCustomCa
 
   const [isBatchMode, setIsBatchMode] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [batchProgress, setBatchProgress] = useState({}); // { [modelId]: { status: 'pending'|'running'|'done'|'error', error?: string } }
+  const [batchProgress, setBatchProgress] = useState({});
   const [error, setError] = useState('');
   const [lastResults, setLastResults] = useState([]);
   const [diskSaveSuccess, setDiskSaveSuccess] = useState(false);
@@ -59,10 +60,9 @@ export default function DevOpenRouterStudio({ candidatesData = [], onAddCustomCa
     saveStoredApiKey(val);
   };
 
-  // Get unique companies list for filter dropdown
   const companiesList = Array.from(new Set(availableModels.map(m => m.company))).filter(Boolean).sort();
 
-  // Filter models based on search, company, and grounding filters
+  // Filter models based on search, company, grounding, and price filters
   const filteredModels = availableModels.filter(m => {
     const matchesSearch = !searchQuery || 
       m.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -74,16 +74,24 @@ export default function DevOpenRouterStudio({ candidatesData = [], onAddCustomCa
       (groundingFilter === 'GROUNDED' && m.supportsGrounding) ||
       (groundingFilter === 'UNGROUNDED' && !m.supportsGrounding);
 
-    return matchesSearch && matchesCompany && matchesGrounding;
+    const matchesPrice = priceFilter === 'ALL' ||
+      (priceFilter === 'FREE_ONLY' && (m.isFree || checkModelIsFree(m))) ||
+      (priceFilter === 'PAID_ONLY' && (!m.isFree && !checkModelIsFree(m)));
+
+    return matchesSearch && matchesCompany && matchesGrounding && matchesPrice;
   });
 
-  // Toggle selection for batch mode
   const toggleBatchSelect = (modelId) => {
     if (selectedBatchIds.includes(modelId)) {
       setSelectedBatchIds(selectedBatchIds.filter(id => id !== modelId));
     } else {
       setSelectedBatchIds([...selectedBatchIds, modelId]);
     }
+  };
+
+  const selectAllFreeModels = () => {
+    const freeIds = filteredModels.filter(m => m.isFree || checkModelIsFree(m)).map(m => m.id);
+    setSelectedBatchIds(freeIds);
   };
 
   const selectAllGrounded = () => {
@@ -114,7 +122,8 @@ export default function DevOpenRouterStudio({ candidatesData = [], onAddCustomCa
     const targetModel = availableModels.find(m => m.id === selectedSingleId) || {
       id: selectedSingleId,
       name: selectedSingleId,
-      supportsGrounding: checkModelGroundingSupport({ id: selectedSingleId })
+      supportsGrounding: checkModelGroundingSupport({ id: selectedSingleId }),
+      isFree: checkModelIsFree({ id: selectedSingleId })
     };
 
     const useGrounding = targetModel.supportsGrounding ? singleGroundedSetting : false;
@@ -129,7 +138,6 @@ export default function DevOpenRouterStudio({ candidatesData = [], onAddCustomCa
 
       setLastResults([result]);
 
-      // Automatically save directly to physical src/data/modelsData.json on disk!
       const updatedFull = [result, ...candidatesData.filter(c => c.modelId !== result.modelId)];
       const savedToDisk = await saveToDiskFile(updatedFull);
       if (savedToDisk) setDiskSaveSuccess(true);
@@ -169,12 +177,12 @@ export default function DevOpenRouterStudio({ candidatesData = [], onAddCustomCa
     const newResults = [];
     let currentDataset = [...candidatesData];
 
-    // Execute in parallel promises
     const promises = selectedBatchIds.map(async (modelId) => {
       const targetModel = availableModels.find(m => m.id === modelId) || {
         id: modelId,
         name: modelId,
-        supportsGrounding: checkModelGroundingSupport({ id: modelId })
+        supportsGrounding: checkModelGroundingSupport({ id: modelId }),
+        isFree: checkModelIsFree({ id: modelId })
       };
 
       const useGrounding = targetModel.supportsGrounding ? batchGroundedSetting : false;
@@ -212,7 +220,6 @@ export default function DevOpenRouterStudio({ candidatesData = [], onAddCustomCa
 
     setLastResults(newResults);
 
-    // Save full updated dataset directly to physical src/data/modelsData.json on disk!
     if (newResults.length > 0) {
       const savedToDisk = await saveToDiskFile(currentDataset);
       if (savedToDisk) setDiskSaveSuccess(true);
@@ -245,7 +252,7 @@ export default function DevOpenRouterStudio({ candidatesData = [], onAddCustomCa
                 </span>
               </h3>
               <p className="text-xs text-slate-300">
-                הרצת מודלים בודדים או במקביל, סינון לפי חברה ו-Grounding, ושמירה ישירה ל-src/data/modelsData.json.
+                סינון מודלים חינמיים/בתשלום, הרצה במקביל ושמירה ישירה ל-src/data/modelsData.json.
               </p>
             </div>
           </div>
@@ -289,14 +296,14 @@ export default function DevOpenRouterStudio({ candidatesData = [], onAddCustomCa
           />
         </div>
 
-        {/* Filters Section (Company, Grounding, Search) */}
+        {/* Filters Section (Company, Grounding, Price, Search) */}
         <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-4">
           <div className="flex items-center gap-2 text-xs font-bold text-cyan-400">
             <Filter className="w-4 h-4" />
-            <span>מסנני מודלים מפתח (Filtering):</span>
+            <span>מסנני מודלים מתקדמים (Filtering):</span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
             
             {/* Free Search */}
             <div>
@@ -306,16 +313,30 @@ export default function DevOpenRouterStudio({ candidatesData = [], onAddCustomCa
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="חפש לפי שם או slug..."
+                  placeholder="למשל: gpt-4o, claude, free..."
                   className="w-full pl-8 pr-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-blue-500"
                 />
                 <Search className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2.5" />
               </div>
             </div>
 
+            {/* Filter by Price (Free vs Paid) */}
+            <div>
+              <label className="text-[11px] font-semibold text-slate-400 block mb-1">מחיר מודל:</label>
+              <select
+                value={priceFilter}
+                onChange={(e) => setPriceFilter(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-white text-xs focus:outline-none focus:border-blue-500 font-semibold"
+              >
+                <option value="ALL">כל המודלים (חינמיים ובתשלום)</option>
+                <option value="FREE_ONLY">🎁 מודלים חינמיים בלבד (Free Models)</option>
+                <option value="PAID_ONLY">💳 מודלים בתשלום (Paid Models)</option>
+              </select>
+            </div>
+
             {/* Filter by Company */}
             <div>
-              <label className="text-[11px] font-semibold text-slate-400 block mb-1">סינון לפי חברה/ספק:</label>
+              <label className="text-[11px] font-semibold text-slate-400 block mb-1">חברה / ספק:</label>
               <select
                 value={companyFilter}
                 onChange={(e) => setCompanyFilter(e.target.value)}
@@ -357,11 +378,14 @@ export default function DevOpenRouterStudio({ candidatesData = [], onAddCustomCa
                 onChange={(e) => setSelectedSingleId(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white text-sm focus:outline-none focus:border-amber-500 font-mono"
               >
-                {filteredModels.map(m => (
-                  <option key={m.id} value={m.id}>
-                    {m.name} ({m.company}) {m.supportsGrounding ? '🌐 [Supports Grounding]' : ''}
-                  </option>
-                ))}
+                {filteredModels.map(m => {
+                  const isFree = m.isFree || checkModelIsFree(m);
+                  return (
+                    <option key={m.id} value={m.id}>
+                      {m.name} ({m.company}) {isFree ? '🎁 [FREE]' : ''} {m.supportsGrounding ? '🌐 [Grounding]' : ''}
+                    </option>
+                  );
+                })}
               </select>
             </div>
 
@@ -408,7 +432,14 @@ export default function DevOpenRouterStudio({ candidatesData = [], onAddCustomCa
                 <span>בחר מודלים להרצה במקביל ({selectedBatchIds.length} נבחרו מתוך {filteredModels.length}):</span>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  onClick={selectAllFreeModels}
+                  className="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 px-2.5 py-1 rounded-lg flex items-center gap-1 font-bold"
+                >
+                  <Gift className="w-3.5 h-3.5" />
+                  <span>בחר את כל החינמיים</span>
+                </button>
                 <button
                   onClick={selectAllGrounded}
                   className="text-xs text-cyan-300 bg-slate-900 border border-slate-700 hover:bg-slate-800 px-2.5 py-1 rounded-lg"
@@ -434,6 +465,7 @@ export default function DevOpenRouterStudio({ candidatesData = [], onAddCustomCa
             <div className="max-h-64 overflow-y-auto p-3 rounded-xl bg-slate-900 border border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-2">
               {filteredModels.map(m => {
                 const isChecked = selectedBatchIds.includes(m.id);
+                const isFree = m.isFree || checkModelIsFree(m);
                 return (
                   <label
                     key={m.id}
@@ -453,11 +485,18 @@ export default function DevOpenRouterStudio({ candidatesData = [], onAddCustomCa
                       <span className="truncate font-mono">{m.name} ({m.company})</span>
                     </div>
 
-                    {m.supportsGrounding && (
-                      <span className="px-1.5 py-0.5 text-[10px] bg-emerald-500/20 text-emerald-300 rounded font-bold shrink-0">
-                        🌐 Grounding
-                      </span>
-                    )}
+                    <div className="flex items-center gap-1 shrink-0">
+                      {isFree && (
+                        <span className="px-1.5 py-0.5 text-[10px] bg-amber-500/20 text-amber-300 rounded font-extrabold flex items-center gap-0.5">
+                          🎁 FREE
+                        </span>
+                      )}
+                      {m.supportsGrounding && (
+                        <span className="px-1.5 py-0.5 text-[10px] bg-emerald-500/20 text-emerald-300 rounded font-bold">
+                          🌐 Grounding
+                        </span>
+                      )}
+                    </div>
                   </label>
                 );
               })}

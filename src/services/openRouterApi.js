@@ -28,6 +28,28 @@ export function checkModelGroundingSupport(model) {
 }
 
 /**
+ * Helper to determine if an OpenRouter model is 100% Free
+ */
+export function checkModelIsFree(model) {
+  if (!model) return false;
+
+  const idLower = (model.id || '').toLowerCase();
+  if (idLower.endsWith(':free') || idLower.includes('free')) {
+    return true;
+  }
+
+  const pricing = model.pricing || {};
+  const promptPrice = Number(pricing.prompt || 0);
+  const completionPrice = Number(pricing.completion || 0);
+
+  if (promptPrice === 0 && completionPrice === 0) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
  * Fetch available models dynamically from OpenRouter OpenAPI endpoint
  */
 export async function fetchOpenRouterModels(searchQuery = '') {
@@ -46,6 +68,7 @@ export async function fetchOpenRouterModels(searchQuery = '') {
 
     return rawModels.map(m => {
       const supportsGrounding = checkModelGroundingSupport(m);
+      const isFree = checkModelIsFree(m);
       const company = m.id.includes('/') ? m.id.split('/')[0] : 'AI';
 
       return {
@@ -56,7 +79,8 @@ export async function fetchOpenRouterModels(searchQuery = '') {
         contextLength: m.context_length || 0,
         pricing: m.pricing || {},
         supportedParameters: m.supported_parameters || [],
-        supportsGrounding: supportsGrounding
+        supportsGrounding: supportsGrounding,
+        isFree: isFree
       };
     });
   } catch (err) {
