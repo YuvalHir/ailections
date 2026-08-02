@@ -74,6 +74,48 @@ function fixHebrewQuotes(jsonStr) {
 }
 
 /**
+ * Fixes missing opening braces in JSON arrays (e.g. `}, "domainId": 7` -> `}, { "domainId": 7`)
+ */
+function fixMissingArrayObjectBraces(jsonStr) {
+  return jsonStr.replace(/\},\s*"([a-zA-Z0-9_-]+)"\s*:/g, '}, { "$1":');
+}
+
+/**
+ * Sanitizes control characters (literal unescaped newlines/tabs inside JSON string values)
+ */
+function sanitizeControlCharacters(jsonStr) {
+  let inString = false;
+  let result = '';
+
+  for (let i = 0; i < jsonStr.length; i++) {
+    const char = jsonStr[i];
+    if (char === '"' && (i === 0 || jsonStr[i - 1] !== '\\')) {
+      inString = !inString;
+      result += char;
+    } else if (inString) {
+      if (char === '\n') {
+        result += '\\n';
+      } else if (char === '\r') {
+        result += '\\r';
+      } else if (char === '\t') {
+        result += '\\t';
+      } else {
+        const code = char.charCodeAt(0);
+        if (code < 32) {
+          result += `\\u${code.toString(16).padStart(4, '0')}`;
+        } else {
+          result += char;
+        }
+      }
+    } else {
+      result += char;
+    }
+  }
+
+  return result;
+}
+
+/**
  * Auto-repairs truncated JSON strings, arrays, and objects if LLM output was cut off.
  */
 function repairTruncatedJson(str) {
@@ -114,7 +156,7 @@ function repairTruncatedJson(str) {
 
 /**
  * Robust JSON extraction and parsing helper
- * Handles markdown code blocks, unescaped Hebrew acronym quotes, and truncated JSON.
+ * Handles markdown code blocks, unescaped Hebrew acronym quotes, missing array braces, bad control chars, and truncated JSON.
  */
 export function cleanAndParseJson(rawText) {
   if (!rawText) throw new Error("תוכן ריק שהתקבל מהמודל");
@@ -142,20 +184,23 @@ export function cleanAndParseJson(rawText) {
     }
   }
 
-  // Attempt 1: Direct JSON parse
+  // Attempt 1: Direct JSON parse after control character sanitization
+  const sanitized = sanitizeControlCharacters(trimmed);
   try {
-    const parsed = JSON.parse(trimmed);
+    const parsed = JSON.parse(sanitized);
     return sanitizeParsedData(parsed);
   } catch (err1) {
-    // Attempt 2: Fix unescaped Hebrew acronym quotes (e.g. תב"ע, צה"ל, בג"ץ)
+    // Attempt 2: Fix missing array object braces + Hebrew acronym quotes
     try {
-      const fixedHebrew = fixHebrewQuotes(trimmed);
+      const fixedBraces = fixMissingArrayObjectBraces(sanitized);
+      const fixedHebrew = fixHebrewQuotes(fixedBraces);
       const parsed = JSON.parse(fixedHebrew);
       return sanitizeParsedData(parsed);
     } catch (err2) {
       // Attempt 3: Repair truncated JSON (unclosed strings and brackets)
       try {
-        const fixedHebrew = fixHebrewQuotes(trimmed);
+        const fixedBraces = fixMissingArrayObjectBraces(sanitized);
+        const fixedHebrew = fixHebrewQuotes(fixedBraces);
         const repaired = repairTruncatedJson(fixedHebrew);
         const parsed = JSON.parse(repaired);
         return sanitizeParsedData(parsed);

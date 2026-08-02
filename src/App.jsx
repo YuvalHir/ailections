@@ -10,7 +10,7 @@ import DevOpenRouterStudio from './components/DevOpenRouterStudio';
 import Footer from './components/Footer';
 
 import staticModelsData from './data/modelsData.json';
-import { getUserVotes, castVote, getCustomModels, saveCustomModel } from './services/storage';
+import { getUserVotes, castVote, getCustomModels, saveCustomModel, fetchAggregateVotes, getUserVotedModel } from './services/storage';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('candidates'); // 'candidates' | 'compare' | 'domains' | 'voting'
@@ -18,21 +18,26 @@ export default function App() {
   const [candidatesData, setCandidatesData] = useState([]);
   const [selectedCandidateModal, setSelectedCandidateModal] = useState(null);
   const [userVotes, setUserVotes] = useState({});
+  const [userVotedModel, setUserVotedModel] = useState(null);
 
   // Initialize data on mount
   useEffect(() => {
     const customModels = getCustomModels();
-    // Combine custom models with static dataset
     const merged = [...customModels, ...staticModelsData];
     setCandidatesData(merged);
 
-    // Load initial user votes
-    setUserVotes(getUserVotes());
+    setUserVotedModel(getUserVotedModel());
+
+    // Fetch live votes (from Vercel KV or local storage)
+    fetchAggregateVotes().then(initialVotes => {
+      if (initialVotes) setUserVotes(initialVotes);
+    });
   }, []);
 
-  const handleVote = (modelId) => {
-    const updated = castVote(modelId);
-    setUserVotes({ ...updated });
+  const handleVote = async (modelId) => {
+    const res = await castVote(modelId);
+    setUserVotes({ ...res.votes });
+    setUserVotedModel(res.userVotedModel);
   };
 
   const handleAddCustomCandidate = (newCandidateData) => {
@@ -96,6 +101,7 @@ export default function App() {
                     onSelectCandidate={setSelectedCandidateModal}
                     onVote={handleVote}
                     userVotes={userVotes}
+                    userVotedModel={userVotedModel}
                   />
                 ))}
               </div>
@@ -122,6 +128,7 @@ export default function App() {
             candidatesData={candidatesData}
             userVotes={userVotes}
             onVote={handleVote}
+            userVotedModel={userVotedModel}
           />
         )}
 
@@ -134,6 +141,7 @@ export default function App() {
           onClose={() => setSelectedCandidateModal(null)}
           onVote={handleVote}
           userVotes={userVotes}
+          userVotedModel={userVotedModel}
         />
       )}
 

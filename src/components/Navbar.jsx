@@ -17,10 +17,10 @@ export default function Navbar({ activeTab, setActiveTab, devMode, setDevMode, t
             </div>
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xl sm:text-2xl font-black tracking-tight text-white font-rubik">
-                ראש ממשלת ה-AI <span className="text-cyan-400 font-extrabold text-sm sm:text-base">2026</span>
-              </span>
+            <div className="flex items-center gap-1.5 text-xl sm:text-2xl font-black tracking-tight text-white font-rubik">
+              <span>ראש ממשלת</span>
+              <span className="text-cyan-400">ה-AI</span>
+              <span className="text-cyan-400">2026</span>
             </div>
             <p className="text-[11px] text-slate-400 hidden sm:block">
               מבחן המנהיגות של מודלי ה-AI

@@ -22,7 +22,7 @@ export default function HeroSection({ candidateCount }) {
             </span>
             <span className="w-1 h-1 rounded-full bg-slate-600"></span>
             <span className="text-xs text-slate-300 font-semibold">
-              {candidateCount} מודלים מובילים
+              {candidateCount} מודלים בנבחרת
             </span>
           </div>
         </div>
@@ -30,7 +30,9 @@ export default function HeroSection({ candidateCount }) {
         {/* Headline */}
         <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight font-rubik">
           מי ה-AI שיבנה את <br className="hidden sm:inline" />
-          <span className="gradient-text-blue">ראש הממשלה האידיאלי</span> לישראל?
+          <span className="gradient-text-blue">
+            ראש הממשלה האידיאלי למדינת ישראל?
+          </span>
         </h1>
 
         {/* Subtitle */}
@@ -50,11 +52,11 @@ export default function HeroSection({ candidateCount }) {
           </button>
         </div>
 
-        {/* 4 Stats Cards */}
+        {/* Dynamic Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 pt-6">
           <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl text-center">
-            <div className="text-2xl sm:text-3xl font-black text-blue-400 font-rubik">7</div>
-            <div className="text-xs text-slate-400 mt-1 font-medium">מודלי AI שונים</div>
+            <div className="text-2xl sm:text-3xl font-black text-blue-400 font-rubik">{candidateCount}</div>
+            <div className="text-xs text-slate-400 mt-1 font-medium">מודלי AI בנבחרת</div>
           </div>
 
           <div className="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl text-center">

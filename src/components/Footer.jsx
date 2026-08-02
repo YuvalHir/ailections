@@ -1,5 +1,5 @@
 import React from 'react';
-import { Crown, Heart, ShieldCheck } from 'lucide-react';
+import { Crown } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -11,8 +11,10 @@ export default function Footer() {
             <Crown className="w-5 h-5 text-amber-400" />
           </div>
           <div>
-            <div className="text-lg font-black text-white font-rubik">
-              ראש ממשלת ה-AI <span className="text-cyan-400">2026</span>
+            <div className="text-lg font-black text-white font-rubik flex items-center gap-1.5">
+              <span>ראש ממשלת</span>
+              <span className="text-cyan-400">ה-AI</span>
+              <span className="text-cyan-400">2026</span>
             </div>
             <div className="text-xs text-slate-400">
               ניסוי מחשבתי ואסטרטגי בהשוואת מודלי שפה מתקדמים
@@ -27,7 +29,9 @@ export default function Footer() {
 
         <div className="text-xs text-slate-400 flex flex-col items-center md:items-end gap-1">
           <span className="flex items-center gap-1 font-semibold text-slate-300">
-            נבנה עבור בחירות ה-AI 2026
+            <span>נבנה עבור בחירות</span>
+            <span>ה-AI</span>
+            <span>2026</span>
           </span>
           <span>עודכן לאחרונה: 02/08/2026</span>
         </div>
