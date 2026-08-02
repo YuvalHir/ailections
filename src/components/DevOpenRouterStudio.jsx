@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Terminal, Key, Play, Globe, CheckCircle2, AlertCircle, RefreshCw, Search, Sparkles, Copy, Download, Save, Check, Filter, Layers, Gift } from 'lucide-react';
+import { Terminal, Key, Play, Globe, CheckCircle2, AlertCircle, RefreshCw, Search, Sparkles, Copy, Download, Save, Check, Filter, Layers, Gift, Edit3 } from 'lucide-react';
 import { DEFAULT_MODELS } from '../data/modelsConfig';
 import { runModelPrompt, fetchOpenRouterModels, checkModelGroundingSupport, checkModelIsFree } from '../services/openRouterApi';
+import { cleanAndParseJson } from '../utils/jsonSchema';
 import { getStoredApiKey, saveStoredApiKey, saveToDiskFile } from '../services/storage';
 
 export default function DevOpenRouterStudio({ candidatesData = [], onAddCustomCandidate }) {
@@ -28,6 +29,10 @@ export default function DevOpenRouterStudio({ candidatesData = [], onAddCustomCa
   const [error, setError] = useState('');
   const [lastResults, setLastResults] = useState([]);
   const [diskSaveSuccess, setDiskSaveSuccess] = useState(false);
+
+  // Raw text recovery state if JSON parse fails
+  const [failedRawText, setFailedRawText] = useState('');
+  const [manualRawInput, setManualRawInput] = useState('');
 
   // Fetch OpenRouter models dynamically
   useEffect(() => {
@@ -111,6 +116,8 @@ export default function DevOpenRouterStudio({ candidatesData = [], onAddCustomCa
   const handleRunSinglePrompt = async () => {
     setError('');
     setLastResults([]);
+    setFailedRawText('');
+    setManualRawInput('');
     setDiskSaveSuccess(false);
 
     if (!apiKey) {
@@ -146,8 +153,50 @@ export default function DevOpenRouterStudio({ candidatesData = [], onAddCustomCa
     } catch (err) {
       console.error(err);
       setError(err.message || 'שגיאה בהרצת המודל');
+      if (err.rawContent) {
+        setFailedRawText(err.rawContent);
+        setManualRawInput(err.rawContent);
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Retry parsing manually modified/recovered raw text
+  const handleRetryParseRaw = async () => {
+    setError('');
+    try {
+      const parsed = cleanAndParseJson(manualRawInput || failedRawText);
+      const targetModel = availableModels.find(m => m.id === selectedSingleId) || {
+        id: selectedSingleId,
+        name: selectedSingleId
+      };
+
+      const result = {
+        id: `custom_${Date.now()}_${selectedSingleId.replace(/[^a-zA-Z0-9]/g, '_')}`,
+        modelId: selectedSingleId,
+        modelName: targetModel.name,
+        company: targetModel.company || "OpenRouter",
+        badgeColor: targetModel.badgeColor || "#3b82f6",
+        accentGlow: targetModel.accentGlow || "rgba(59, 130, 246, 0.4)",
+        avatarIcon: targetModel.avatarIcon || "Sparkles",
+        grounded: singleGroundedSetting,
+        timestamp: new Date().toISOString(),
+        formattedTimestamp: new Date().toLocaleString("he-IL", { dateStyle: "medium", timeStyle: "short" }),
+        ...parsed
+      };
+
+      setLastResults([result]);
+      setFailedRawText('');
+
+      const updatedFull = [result, ...candidatesData.filter(c => c.modelId !== result.modelId)];
+      const savedToDisk = await saveToDiskFile(updatedFull);
+      if (savedToDisk) setDiskSaveSuccess(true);
+
+      onAddCustomCandidate(result);
+    } catch (retryErr) {
+      console.error(retryErr);
+      setError(`ניסיון פענוח נוסף נכשל: ${retryErr.message}`);
     }
   };
 
@@ -155,6 +204,8 @@ export default function DevOpenRouterStudio({ candidatesData = [], onAddCustomCa
   const handleRunBatchPrompts = async () => {
     setError('');
     setLastResults([]);
+    setFailedRawText('');
+    setManualRawInput('');
     setDiskSaveSuccess(false);
 
     if (!apiKey) {
@@ -211,7 +262,7 @@ export default function DevOpenRouterStudio({ candidatesData = [], onAddCustomCa
         console.error(`Error running model ${modelId}:`, err);
         setBatchProgress(prev => ({
           ...prev,
-          [modelId]: { status: 'error', error: err.message }
+          [modelId]: { status: 'error', error: err.message, rawContent: err.rawContent }
         }));
       }
     });
@@ -252,7 +303,7 @@ export default function DevOpenRouterStudio({ candidatesData = [], onAddCustomCa
                 </span>
               </h3>
               <p className="text-xs text-slate-300">
-                סינון מודלים חינמיים/בתשלום, הרצה במקביל ושמירה ישירה ל-src/data/modelsData.json.
+                סינון מודלים חינמיים/בתשלום, הרצה במקביל, שחזור טקסט גולמי ושמירה ל-src/data/modelsData.json.
               </p>
             </div>
           </div>
@@ -535,7 +586,21 @@ export default function DevOpenRouterStudio({ candidatesData = [], onAddCustomCa
                   {info.status === 'pending' && <span className="text-slate-400">ממתין...</span>}
                   {info.status === 'running' && <span className="text-amber-400 flex items-center gap-1"><RefreshCw className="w-3 h-3 animate-spin" /> מריץ...</span>}
                   {info.status === 'done' && <span className="text-emerald-400 font-bold">הושלם ✓</span>}
-                  {info.status === 'error' && <span className="text-rose-400 font-bold">שגיאה ❌ ({info.error})</span>}
+                  {info.status === 'error' && (
+                    <button
+                      onClick={() => {
+                        if (info.rawContent) {
+                          setFailedRawText(info.rawContent);
+                          setManualRawInput(info.rawContent);
+                          setSelectedSingleId(modelId);
+                          setIsBatchMode(false);
+                        }
+                      }}
+                      className="text-rose-400 font-bold hover:underline flex items-center gap-1"
+                    >
+                      שגיאה ❌ ({info.error}) - לחץ לתיקון
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -559,6 +624,58 @@ export default function DevOpenRouterStudio({ candidatesData = [], onAddCustomCa
         )}
 
       </div>
+
+      {/* Raw Text Recovery & Manual JSON Retry Panel */}
+      {failedRawText && (
+        <div className="bg-[#0f172a] rounded-2xl p-6 border border-amber-500/50 space-y-4 shadow-2xl">
+          <div className="flex items-center justify-between flex-wrap gap-2 border-b border-slate-800 pb-3">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-6 h-6 text-amber-400" />
+              <div>
+                <h4 className="text-base font-bold text-white font-rubik">
+                  טקסט גולמי שנשמר מהמודל (Raw Response Recovery)
+                </h4>
+                <p className="text-xs text-slate-400">
+                  התשובה מהמודל לא אבדה! ניתן לתקן ידנית בתיבת הטקסט ולנסות לפענח שוב.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(manualRawInput || failedRawText);
+                }}
+                className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1.5"
+              >
+                <Copy className="w-3.5 h-3.5 text-cyan-400" />
+                <span>העתק טקסט גולמי</span>
+              </button>
+
+              <button
+                onClick={handleRetryParseRaw}
+                className="btn-primary text-xs py-1.5 px-4 flex items-center gap-1.5"
+              >
+                <RefreshCw className="w-3.5 h-3.5 text-emerald-300" />
+                <span>🔄 נסה לפענח JSON מחדש</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-300 flex items-center gap-1">
+              <Edit3 className="w-3.5 h-3.5 text-amber-400" />
+              <span>ערוך/בדוק את הטקסט הגולמי שהתקבל מהמודל:</span>
+            </label>
+            <textarea
+              value={manualRawInput}
+              onChange={(e) => setManualRawInput(e.target.value)}
+              rows={12}
+              className="w-full p-4 rounded-xl bg-[#090d16] font-mono text-xs text-slate-200 border border-slate-800 focus:outline-none focus:border-amber-500 leading-relaxed"
+            />
+          </div>
+        </div>
+      )}
 
       {/* Results Section */}
       {lastResults.length > 0 && (

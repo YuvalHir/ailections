@@ -1,1 +1,170 @@
-[]
+[
+  {
+    "id": "custom_1785659422835_google_gemma_4_26b_a4b_it_free",
+    "modelId": "google/gemma-4-26b-a4b-it:free",
+    "modelName": "Google: Gemma 4 26B A4B  (free)",
+    "company": "Google",
+    "badgeColor": "#3b82f6",
+    "accentGlow": "rgba(59, 130, 246, 0.4)",
+    "avatarIcon": "Sparkles",
+    "grounded": false,
+    "timestamp": "2026-08-02T08:30:22.835Z",
+    "formattedTimestamp": "2 באוג׳ 2026, 11:30",
+    "candidate": {
+      "name": "דוד אריאל",
+      "age": 52,
+      "origin": "קולמוס, ישראל",
+      "background": "קצין מילטי ומומחה אסטרטגיה ביטחונית עם ניסיון עשרות שנים בשירות במועצת הביטחון הלאומי ובעבודה ציבורית בתחומי התקציב והביטחון.",
+      "personaSummary": "מנהיג ריאליסט-לאומי המאמין שקיומה של המדינה תלוי ביכולתה להפגין עוצמה ביטחונית מוחלטת לצד יציבות כלכלית ומשילות. המצע מתמקד בחיזוק הריבונות והגנה על המרכיב היהודי והביטחוני כבסיס לכל שירות אחר."
+    },
+    "ideologicalPrinciples": [
+      "עליונות הביטחון הלאומי על פני אינטרסים חברתיים זמניים.",
+      "ריבונות יהודית בלתי מתפשרת על שטחי המדינה והצורך בהכלה של זהות לאומית חזקה.",
+      "משילות כערך יסוד: יכולת הממשלה לאכוף חוק בכל רחבי המדינה.",
+      "כלכלה מבוססת שוק עם מיסים נמוכים לעסקים כדי לממן את צרכי המדינה.",
+      "הגנה על מודל צבא העם כעמוד שדרה חברתי וביטחוני.",
+      "הכלכלה היא אמצעי להשגת ביטחון ולא מטרה בפני עצמה.",
+      "צורך בשינוי מבני במערכת המשפט לטובת עליונות הרשות המחוקקת.",
+      "ניהול יחסים בינלאומיים מתוך עמידה על צדרי ישראל, תוך הכרה במגבלות דיפלומטיות.",
+      "חינוך המדגיש מסורת יהודית וערכי ליבה לאומיים.",
+      "התמודדות עם איומים קיומיים באמצעות כוח ולא באמצעות הסכמים בלתי מחייבים."
+    ],
+    "valueRatings": {
+      "nationalSecurity": {
+        "score": 50,
+        "justification": "נימוק חשיבות הערך במערכת השיקולים."
+      },
+      "personalFreedom": {
+        "score": 50,
+        "justification": "נימוק חשיבות הערך במערכת השיקולים."
+      },
+      "equality": {
+        "score": 50,
+        "justification": "נימוק חשיבות הערך במערכת השיקולים."
+      },
+      "economicEfficiency": {
+        "score": 50,
+        "justification": "נימוק חשיבות הערך במערכת השיקולים."
+      },
+      "socialJustice": {
+        "score": 50,
+        "justification": "נימוק חשיבות הערך במערכת השיקולים."
+      },
+      "traditionAndJewishIdentity": {
+        "score": 50,
+        "justification": "נימוק חשיבות הערך במערכת השיקולים."
+      },
+      "liberalDemocracy": {
+        "score": 50,
+        "justification": "נימוק חשיבות הערך במערכת השיקולים."
+      },
+      "governance": {
+        "score": 50,
+        "justification": "נימוק חשיבות הערך במערכת השיקולים."
+      },
+      "socialUnity": {
+        "score": 50,
+        "justification": "נימוק חשיבות הערך במערכת השיקולים."
+      },
+      "internationalRelations": {
+        "score": 50,
+        "justification": "נימוק חשיבות הערך במערכת השיקולים."
+      }
+    },
+    "priorities": {
+      "top3DomainIds": [
+        1,
+        2,
+        4
+      ],
+      "tradeoffsExplanation": "מתן עדיפות לתחומי הליבה על חשבון תקציבים משניים."
+    },
+    "operationalPlatform": [
+      {
+        "domainId": 1,
+        "domainTitle": "ביטחון לאומי וחוץ",
+        "plan": "התמקדות בשינוי המציאות בלבנון דרך לחץ צבאי וכלכלי על חיזבאללה, תוך ניתוק הקשר עם קטאר במקומות שבהם היא פועלת נגד ישראל.",
+        "isTopPriority": true,
+        "first100Days": "",
+        "twoYearGoal": "",
+        "kpi": ""
+      },
+      {
+        "domainId": 2,
+        "domainTitle": "צבא, מילואים וחברה",
+        "plan": "הקמת מסלולי שירות אזרחי/צבאי למגזרים שאינם משרתים, כדי לשמור על מודל צבא העם ולמנוע שחיקה.",
+        "isTopPriority": true,
+        "first100Days": "",
+        "twoYearGoal": "",
+        "kpi": ""
+      },
+      {
+        "domainId": 3,
+        "domainTitle": "ביטחון פנים",
+        "plan": "שימוש בכוח רב ושימוש באמצעים פיננסיים להשתשות ארגוני פשיעה.",
+        "isTopPriority": false,
+        "first100Days": "",
+        "twoYearGoal": "",
+        "kpi": ""
+      },
+      {
+        "domainId": 4,
+        "domainTitle": "כלכלה ואוצר",
+        "plan": "עידוד תעשיות היי-טק וצמצום בירוקרטיה, תוך הגברת המיסים על תחומי היוקרה.",
+        "isTopPriority": true,
+        "first100Days": "",
+        "twoYearGoal": "",
+        "kpi": ""
+      },
+      {
+        "domainId": 5,
+        "domainTitle": "פנים",
+        "plan": "חיזוק השלטון המקומי והטמעת ערכי המדינה.",
+        "isTopPriority": false,
+        "first100Days": "",
+        "twoYearGoal": "",
+        "kpi": ""
+      },
+      {
+        "domainId": 6,
+        "domainTitle": "חינוך",
+        "plan": "רפורמה במערכת החינוך שתכין את הדור הבא לשירות צבאי וכלכלי.",
+        "isTopPriority": false,
+        "first100Days": "",
+        "twoYearGoal": "",
+        "kpi": ""
+      },
+      {
+        "domainId": 7,
+        "domainTitle": "בריאות",
+        "plan": "שיפור המערכת הציבורית באמצעות מודלים של שותפות ציבורית-פרטית.",
+        "isTopPriority": false,
+        "first100Days": "",
+        "twoYearGoal": "",
+        "kpi": ""
+      },
+      {
+        "domainId": 8,
+        "domainTitle": "משפטים",
+        "plan": "חיזוק עליונות הרשות המחוקקת והמנהלתית.",
+        "isTopPriority": false,
+        "first100Days": "",
+        "twoYearGoal": "",
+        "kpi": ""
+      },
+      {
+        "domainId": 9,
+        "domainTitle": "תקשורת",
+        "plan": "הגנה על חופש הביטוי לצד מאבק בפייק ניוז באמצעות חינוך והסברה.",
+        "isTopPriority": false,
+        "first100Days": "",
+        "twoYearGoal": "",
+        "kpi": ""
+      }
+    ],
+    "selfCriticism": {
+      "strongestCounterArgument": "המצע יוצר שסע עמוק בחברה על ידי דחיפת רפורמות מבניות וצמצום תקציבים חברתיים, מה שעלול להוביל למלחמת אחים וקיטוע חברתי חסר תקדים.",
+      "rebuttal": "הגישה אינה מתעלמת מהחברה אלא בונה לה בסיס קיומי."
+    }
+  }
+]

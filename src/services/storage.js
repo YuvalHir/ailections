@@ -1,9 +1,25 @@
+import { neon } from '@neondatabase/serverless';
+
 const VOTES_KEY = "ailections_user_votes_2026";
 const VOTED_MODEL_KEY = "ailections_user_voted_model";
 const API_KEY_STORAGE = "ailections_openrouter_key";
 const CUSTOM_MODELS_KEY = "ailections_custom_models";
 
-// Vercel KV Environment Variables (auto-populated by Vercel KV REST integration)
+// Neon Postgres Connection URL (auto-populated by Vercel Neon Integration)
+const POSTGRES_URL = typeof import.meta !== 'undefined' && import.meta.env
+  ? (import.meta.env.VITE_POSTGRES_URL || import.meta.env.POSTGRES_URL || import.meta.env.DATABASE_URL)
+  : null;
+
+let sql = null;
+if (POSTGRES_URL) {
+  try {
+    sql = neon(POSTGRES_URL);
+  } catch (e) {
+    console.warn("Neon Postgres client init failed:", e);
+  }
+}
+
+// Vercel KV Environment Variables
 const KV_URL = typeof import.meta !== 'undefined' && import.meta.env
   ? (import.meta.env.VITE_KV_REST_API_URL || import.meta.env.KV_REST_API_URL)
   : null;
@@ -23,10 +39,45 @@ export function getUserVotedModel() {
   }
 }
 
+let neonTableInitialized = false;
+
+async function initNeonTable() {
+  if (!sql || neonTableInitialized) return;
+  try {
+    await sql(`
+      CREATE TABLE IF NOT EXISTS votes (
+        model_id VARCHAR(255) PRIMARY KEY,
+        count INT NOT NULL DEFAULT 0
+      );
+    `);
+    neonTableInitialized = true;
+  } catch (e) {
+    console.warn("Failed to init Neon votes table:", e);
+  }
+}
+
 /**
- * Fetches current aggregate votes map from Vercel KV REST API or fallback to localStorage
+ * Fetches current aggregate votes map from Neon Postgres, Vercel KV, or fallback to localStorage
  */
 export async function fetchAggregateVotes() {
+  // 1. Try Neon Postgres
+  if (sql) {
+    try {
+      await initNeonTable();
+      const rows = await sql('SELECT model_id, count FROM votes');
+      if (rows && Array.isArray(rows)) {
+        const votesMap = {};
+        rows.forEach(r => {
+          votesMap[r.model_id] = parseInt(r.count, 10) || 0;
+        });
+        return votesMap;
+      }
+    } catch (e) {
+      console.warn("Neon Postgres fetch votes failed:", e);
+    }
+  }
+
+  // 2. Try Vercel KV REST API
   if (KV_URL && KV_TOKEN) {
     try {
       const res = await fetch(`${KV_URL}/hgetall/votes`, {
@@ -52,6 +103,7 @@ export async function fetchAggregateVotes() {
       console.warn("Vercel KV fetch failed, falling back to local votes:", e);
     }
   }
+
   return getUserVotes();
 }
 
@@ -66,7 +118,7 @@ export function getUserVotes() {
 
 /**
  * Cast or change vote for a model ID.
- * Enforces 1 vote per browser, and syncs with Vercel KV if connected!
+ * Enforces 1 vote per browser, and syncs with Neon Postgres or Vercel KV!
  */
 export async function castVote(modelId) {
   const previousVotedModel = getUserVotedModel();
@@ -86,7 +138,27 @@ export async function castVote(modelId) {
     console.error("Failed to save vote to localStorage", e);
   }
 
-  // Sync to Vercel KV in background if configured
+  // 1. Sync to Neon Postgres
+  if (sql) {
+    try {
+      await initNeonTable();
+      if (previousVotedModel && previousVotedModel !== modelId) {
+        await sql(
+          'UPDATE votes SET count = GREATEST(0, count - 1) WHERE model_id = $1',
+          [previousVotedModel]
+        );
+      }
+      await sql(
+        `INSERT INTO votes (model_id, count) VALUES ($1, 1)
+         ON CONFLICT (model_id) DO UPDATE SET count = votes.count + 1`,
+        [modelId]
+      );
+    } catch (e) {
+      console.warn("Neon Postgres vote sync failed:", e);
+    }
+  }
+
+  // 2. Sync to Vercel KV in background if configured
   if (KV_URL && KV_TOKEN) {
     try {
       if (previousVotedModel && previousVotedModel !== modelId) {

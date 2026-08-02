@@ -90,7 +90,7 @@ export async function fetchOpenRouterModels(searchQuery = '') {
 }
 
 /**
- * Call an AI model via OpenRouter API with grounding (if supported) and strict format instructions
+ * Call an AI model via OpenRouter API using Structured Outputs and Response Healing
  */
 export async function runModelPrompt({ apiKey, modelId, modelConfig, isGrounded = false }) {
   if (!apiKey) {
@@ -100,13 +100,17 @@ export async function runModelPrompt({ apiKey, modelId, modelConfig, isGrounded 
   const systemInstructions = `${SYSTEM_ROLEPLAY_PROMPT}
 
 IMPORTANT INSTRUCTIONS FOR OUTPUT FORMAT:
-You MUST respond strictly in valid JSON format corresponding to the following schema.
+You MUST respond strictly in valid JSON format corresponding to the schema.
 Do NOT output any intro or outro markdown text outside the JSON. Return only the JSON object.
-Ensure all double quotes inside strings (especially Hebrew acronyms like צה"ל, יו"ש, בג"ץ, תב"ע) are properly escaped as \\" or written with gershayim (״).
+Ensure all double quotes inside strings (especially Hebrew acronyms like צה"ל, יו"ש, ביו"ש, בג"ץ, תב"ע) are properly escaped as \\" or written with gershayim (״).`;
 
-JSON Schema structure:
-${JSON.stringify(MODEL_RESPONSE_JSON_SCHEMA, null, 2)}`;
+  // Always enable OpenRouter's Response Healing plugin for automatic provider-side JSON repair
+  const plugins = [{ id: "response-healing" }];
+  if (isGrounded) {
+    plugins.push({ id: "web" });
+  }
 
+  // OpenRouter Structured Outputs format configuration
   const payload = {
     model: modelId,
     messages: [
@@ -119,17 +123,20 @@ ${JSON.stringify(MODEL_RESPONSE_JSON_SCHEMA, null, 2)}`;
         content: systemInstructions
       }
     ],
-    response_format: { type: "json_object" },
+    response_format: {
+      type: "json_schema",
+      json_schema: {
+        name: "prime_minister_platform",
+        strict: false,
+        schema: MODEL_RESPONSE_JSON_SCHEMA
+      }
+    },
+    plugins: plugins,
     temperature: 0.7,
     max_tokens: 8000
   };
 
-  // Enable web grounding plugin ONLY if requested and supported
-  if (isGrounded) {
-    payload.plugins = [{ id: "web" }];
-  }
-
-  const response = await fetch(OPENROUTER_COMPLETIONS_URL, {
+  let response = await fetch(OPENROUTER_COMPLETIONS_URL, {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${apiKey}`,
@@ -140,9 +147,24 @@ ${JSON.stringify(MODEL_RESPONSE_JSON_SCHEMA, null, 2)}`;
     body: JSON.stringify(payload)
   });
 
+  // If structured outputs fail on provider fallback, retry with json_object
   if (!response.ok) {
     const errData = await response.json().catch(() => ({}));
-    throw new Error(errData.error?.message || `שגיאה בתקשורת מול OpenRouter (${response.status})`);
+    if (errData.error?.message?.includes("response_format") || errData.error?.message?.includes("json_schema")) {
+      payload.response_format = { type: "json_object" };
+      response = await fetch(OPENROUTER_COMPLETIONS_URL, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "HTTP-Referer": "http://localhost:5173",
+          "X-Title": "AIlections Israel 2026",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+    } else {
+      throw new Error(errData.error?.message || `שגיאה בתקשורת מול OpenRouter (${response.status})`);
+    }
   }
 
   const data = await response.json();
@@ -152,7 +174,14 @@ ${JSON.stringify(MODEL_RESPONSE_JSON_SCHEMA, null, 2)}`;
     throw new Error("לא התקבלה תשובה מהמודל");
   }
 
-  const parsedResponse = cleanAndParseJson(rawChoiceContent);
+  let parsedResponse;
+  try {
+    parsedResponse = cleanAndParseJson(rawChoiceContent);
+  } catch (err) {
+    const customErr = new Error(err.message || "שגיאה בפענוח ה-JSON מהמודל");
+    customErr.rawContent = rawChoiceContent;
+    throw customErr;
+  }
 
   return {
     id: `custom_${Date.now()}_${modelId.replace(/[^a-zA-Z0-9]/g, '_')}`,
