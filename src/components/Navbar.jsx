@@ -1,5 +1,5 @@
 import React from 'react';
-import { Crown, Sparkles, Scale, Terminal, Vote, ShieldCheck } from 'lucide-react';
+import { Crown, Sparkles, Scale, Terminal, Vote, ShieldCheck, Compass } from 'lucide-react';
 import { isDevStudioAllowed } from '../services/openRouterApi';
 
 export default function Navbar({ activeTab, setActiveTab, devMode, setDevMode, totalVotes }) {
@@ -33,7 +33,7 @@ export default function Navbar({ activeTab, setActiveTab, devMode, setDevMode, t
         <nav className="hidden md:flex items-center gap-1.5 bg-slate-900/90 p-1.5 rounded-2xl border border-slate-800">
           <button
             onClick={() => setActiveTab('candidates')}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 ${
+            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 ${
               activeTab === 'candidates'
                 ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
                 : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
@@ -44,39 +44,51 @@ export default function Navbar({ activeTab, setActiveTab, devMode, setDevMode, t
           </button>
 
           <button
+            onClick={() => setActiveTab('spectrum')}
+            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 ${
+              activeTab === 'spectrum'
+                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
+                : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+            }`}
+          >
+            <Compass className="w-4 h-4 text-purple-400" />
+            <span>המפה הפוליטית</span>
+          </button>
+
+          <button
             onClick={() => setActiveTab('compare')}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 ${
+            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 ${
               activeTab === 'compare'
                 ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
                 : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
             }`}
           >
             <Scale className="w-4 h-4 text-amber-400" />
-            <span>השוואה ראש בראש</span>
+            <span>השוואה</span>
           </button>
 
           <button
             onClick={() => setActiveTab('domains')}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 ${
+            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 ${
               activeTab === 'domains'
                 ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
                 : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
             }`}
           >
             <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span>לפי סוגיות</span>
+            <span>סוגיות</span>
           </button>
 
           <button
             onClick={() => setActiveTab('voting')}
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 ${
+            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 ${
               activeTab === 'voting'
                 ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
                 : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
             }`}
           >
             <Vote className="w-4 h-4 text-rose-400" />
-            <span>סקר הציבור</span>
+            <span>סקר</span>
             {totalVotes > 0 && (
               <span className="px-1.5 py-0.5 text-[10px] bg-rose-500/30 text-rose-300 rounded-full font-bold">
                 {totalVotes}
@@ -109,15 +121,23 @@ export default function Navbar({ activeTab, setActiveTab, devMode, setDevMode, t
       <div className="md:hidden flex items-center justify-around bg-slate-900 border-t border-slate-800 py-2 px-2">
         <button
           onClick={() => setActiveTab('candidates')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-bold ${
+          className={`px-2.5 py-1 rounded-lg text-xs font-bold ${
             activeTab === 'candidates' ? 'bg-blue-600 text-white' : 'text-slate-400'
           }`}
         >
           המועמדים
         </button>
         <button
+          onClick={() => setActiveTab('spectrum')}
+          className={`px-2.5 py-1 rounded-lg text-xs font-bold ${
+            activeTab === 'spectrum' ? 'bg-blue-600 text-white' : 'text-slate-400'
+          }`}
+        >
+          מפה
+        </button>
+        <button
           onClick={() => setActiveTab('compare')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-bold ${
+          className={`px-2.5 py-1 rounded-lg text-xs font-bold ${
             activeTab === 'compare' ? 'bg-blue-600 text-white' : 'text-slate-400'
           }`}
         >
@@ -125,7 +145,7 @@ export default function Navbar({ activeTab, setActiveTab, devMode, setDevMode, t
         </button>
         <button
           onClick={() => setActiveTab('domains')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-bold ${
+          className={`px-2.5 py-1 rounded-lg text-xs font-bold ${
             activeTab === 'domains' ? 'bg-blue-600 text-white' : 'text-slate-400'
           }`}
         >
@@ -133,7 +153,7 @@ export default function Navbar({ activeTab, setActiveTab, devMode, setDevMode, t
         </button>
         <button
           onClick={() => setActiveTab('voting')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-bold ${
+          className={`px-2.5 py-1 rounded-lg text-xs font-bold ${
             activeTab === 'voting' ? 'bg-blue-600 text-white' : 'text-slate-400'
           }`}
         >

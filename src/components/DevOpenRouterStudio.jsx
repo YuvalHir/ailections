@@ -86,6 +86,16 @@ export default function DevOpenRouterStudio({ candidatesData = [], onAddCustomCa
     return matchesSearch && matchesCompany && matchesGrounding && matchesPrice;
   });
 
+  // Auto-sync selectedSingleId whenever filteredModels list changes
+  useEffect(() => {
+    if (filteredModels && filteredModels.length > 0) {
+      const exists = filteredModels.some(m => m.id === selectedSingleId);
+      if (!exists) {
+        setSelectedSingleId(filteredModels[0].id);
+      }
+    }
+  }, [searchQuery, companyFilter, groundingFilter, priceFilter, availableModels]);
+
   const toggleBatchSelect = (modelId) => {
     if (selectedBatchIds.includes(modelId)) {
       setSelectedBatchIds(selectedBatchIds.filter(id => id !== modelId));
@@ -136,41 +146,12 @@ export default function DevOpenRouterStudio({ candidatesData = [], onAddCustomCa
     const useGrounding = targetModel.supportsGrounding ? singleGroundedSetting : false;
 
     try {
-      const result = await runModelPrompt({
+      const parsed = await runModelPrompt({
         apiKey,
         modelId: selectedSingleId,
         modelConfig: targetModel,
         isGrounded: useGrounding
       });
-
-      setLastResults([result]);
-
-      const updatedFull = [result, ...candidatesData.filter(c => c.modelId !== result.modelId)];
-      const savedToDisk = await saveToDiskFile(updatedFull);
-      if (savedToDisk) setDiskSaveSuccess(true);
-
-      onAddCustomCandidate(result);
-    } catch (err) {
-      console.error(err);
-      setError(err.message || 'שגיאה בהרצת המודל');
-      if (err.rawContent) {
-        setFailedRawText(err.rawContent);
-        setManualRawInput(err.rawContent);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Retry parsing manually modified/recovered raw text
-  const handleRetryParseRaw = async () => {
-    setError('');
-    try {
-      const parsed = cleanAndParseJson(manualRawInput || failedRawText);
-      const targetModel = availableModels.find(m => m.id === selectedSingleId) || {
-        id: selectedSingleId,
-        name: selectedSingleId
-      };
 
       const result = {
         id: `custom_${Date.now()}_${selectedSingleId.replace(/[^a-zA-Z0-9]/g, '_')}`,
@@ -193,14 +174,22 @@ export default function DevOpenRouterStudio({ candidatesData = [], onAddCustomCa
       const savedToDisk = await saveToDiskFile(updatedFull);
       if (savedToDisk) setDiskSaveSuccess(true);
 
-      onAddCustomCandidate(result);
-    } catch (retryErr) {
-      console.error(retryErr);
-      setError(`ניסיון פענוח נוסף נכשל: ${retryErr.message}`);
+      if (onAddCustomCandidate) {
+        onAddCustomCandidate(result);
+      }
+    } catch (err) {
+      console.error("Failed to run single model prompt:", err);
+      setError(err.message || 'שגיאה בהרצת המודל מול OpenRouter');
+      if (err.rawContent) {
+        setFailedRawText(err.rawContent);
+        setManualRawInput(err.rawContent);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Run batch multi-model execution in parallel
+  // Run multi-model batch execution
   const handleRunBatchPrompts = async () => {
     setError('');
     setLastResults([]);
@@ -221,14 +210,20 @@ export default function DevOpenRouterStudio({ candidatesData = [], onAddCustomCa
     setLoading(true);
     const initialProgress = {};
     selectedBatchIds.forEach(id => {
-      initialProgress[id] = { status: 'pending' };
+      initialProgress[id] = { status: 'pending', error: null };
     });
     setBatchProgress(initialProgress);
 
-    const newResults = [];
-    let currentDataset = [...candidatesData];
+    const completedResults = [];
+    let currentFullDataset = [...candidatesData];
 
+    // Execute in parallel
     const promises = selectedBatchIds.map(async (modelId) => {
+      setBatchProgress(prev => ({
+        ...prev,
+        [modelId]: { status: 'running', error: null }
+      }));
+
       const targetModel = availableModels.find(m => m.id === modelId) || {
         id: modelId,
         name: modelId,
@@ -238,28 +233,37 @@ export default function DevOpenRouterStudio({ candidatesData = [], onAddCustomCa
 
       const useGrounding = targetModel.supportsGrounding ? batchGroundedSetting : false;
 
-      setBatchProgress(prev => ({
-        ...prev,
-        [modelId]: { status: 'running' }
-      }));
-
       try {
-        const result = await runModelPrompt({
+        const parsed = await runModelPrompt({
           apiKey,
-          modelId,
+          modelId: modelId,
           modelConfig: targetModel,
           isGrounded: useGrounding
         });
 
+        const result = {
+          id: `custom_${Date.now()}_${modelId.replace(/[^a-zA-Z0-9]/g, '_')}`,
+          modelId: modelId,
+          modelName: targetModel.name,
+          company: targetModel.company || "OpenRouter",
+          badgeColor: targetModel.badgeColor || "#3b82f6",
+          accentGlow: targetModel.accentGlow || "rgba(59, 130, 246, 0.4)",
+          avatarIcon: targetModel.avatarIcon || "Sparkles",
+          grounded: useGrounding,
+          timestamp: new Date().toISOString(),
+          formattedTimestamp: new Date().toLocaleString("he-IL", { dateStyle: "medium", timeStyle: "short" }),
+          ...parsed
+        };
+
+        completedResults.push(result);
+        currentFullDataset = [result, ...currentFullDataset.filter(c => c.modelId !== result.modelId)];
+
         setBatchProgress(prev => ({
           ...prev,
-          [modelId]: { status: 'done' }
+          [modelId]: { status: 'success', result }
         }));
-
-        newResults.push(result);
-        currentDataset = [result, ...currentDataset.filter(c => c.modelId !== result.modelId)];
       } catch (err) {
-        console.error(`Error running model ${modelId}:`, err);
+        console.error(`Batch execution failed for ${modelId}:`, err);
         setBatchProgress(prev => ({
           ...prev,
           [modelId]: { status: 'error', error: err.message, rawContent: err.rawContent }
@@ -269,34 +273,68 @@ export default function DevOpenRouterStudio({ candidatesData = [], onAddCustomCa
 
     await Promise.allSettled(promises);
 
-    setLastResults(newResults);
-
-    if (newResults.length > 0) {
-      const savedToDisk = await saveToDiskFile(currentDataset);
-      if (savedToDisk) setDiskSaveSuccess(true);
-      newResults.forEach(r => onAddCustomCandidate(r));
-    }
-
+    setLastResults(completedResults);
     setLoading(false);
+
+    if (completedResults.length > 0) {
+      const savedToDisk = await saveToDiskFile(currentFullDataset);
+      if (savedToDisk) setDiskSaveSuccess(true);
+    }
   };
 
-  const handleSaveAllToDisk = async () => {
-    const saved = await saveToDiskFile(candidatesData);
-    if (saved) setDiskSaveSuccess(true);
+  // Manual retry of raw text extraction
+  const handleRetryManualJson = () => {
+    if (!manualRawInput) return;
+    try {
+      const parsed = cleanAndParseJson(manualRawInput);
+      const targetModel = availableModels.find(m => m.id === selectedSingleId) || {
+        id: selectedSingleId,
+        name: selectedSingleId
+      };
+
+      const result = {
+        id: `custom_${Date.now()}_${selectedSingleId.replace(/[^a-zA-Z0-9]/g, '_')}`,
+        modelId: selectedSingleId,
+        modelName: targetModel.name,
+        company: targetModel.company || "OpenRouter",
+        badgeColor: targetModel.badgeColor || "#3b82f6",
+        accentGlow: targetModel.accentGlow || "rgba(59, 130, 246, 0.4)",
+        avatarIcon: targetModel.avatarIcon || "Sparkles",
+        grounded: singleGroundedSetting,
+        timestamp: new Date().toISOString(),
+        formattedTimestamp: new Date().toLocaleString("he-IL", { dateStyle: "medium", timeStyle: "short" }),
+        ...parsed
+      };
+
+      setLastResults([result]);
+      setError('');
+      setFailedRawText('');
+
+      const updatedFull = [result, ...candidatesData.filter(c => c.modelId !== result.modelId)];
+      saveToDiskFile(updatedFull).then(saved => {
+        if (saved) setDiskSaveSuccess(true);
+      });
+
+      if (onAddCustomCandidate) {
+        onAddCustomCandidate(result);
+      }
+    } catch (err) {
+      setError(`ניסיון החילוץ מחדש נכשל: ${err.message}`);
+    }
   };
 
   return (
-    <section className="py-8 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto space-y-6">
-      
-      {/* Studio Header */}
-      <div className="bg-[#0f172a] rounded-2xl p-6 border border-amber-500/40 space-y-6 shadow-2xl">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+    <div className="bg-slate-950/90 border-b border-amber-500/30 p-4 sm:p-6 text-slate-100 shadow-2xl relative z-30">
+      <div className="max-w-7xl mx-auto space-y-6">
+        
+        {/* Studio Title */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-300 flex items-center justify-center font-bold shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-700 flex items-center justify-center text-slate-950 font-bold shadow-lg">
               <Terminal className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-white font-rubik flex items-center gap-2">
+              <h3 className="text-lg sm:text-xl font-black text-white font-rubik flex items-center gap-2">
                 <span>Dev Studio: הרצת מודלים ושמירה ישירה לקובץ</span>
                 <span className="px-2 py-0.5 text-xs bg-amber-500/30 text-amber-200 rounded-full font-bold">
                   OpenRouter API
@@ -448,269 +486,226 @@ export default function DevOpenRouterStudio({ candidatesData = [], onAddCustomCa
                   onChange={(e) => setSingleGroundedSetting(e.target.checked)}
                   className="w-4 h-4 rounded text-blue-600 bg-slate-800 border-slate-700"
                 />
-                <span>הפעל חיפוש ברשת בזמן אמת (Grounding) במידה ונתמך</span>
+                <span>הפעל חיפוש רשת בזמן אמת (Grounding via Web Plugin)</span>
               </label>
-            </div>
 
-            <div className="flex justify-end">
               <button
                 onClick={handleRunSinglePrompt}
                 disabled={loading}
-                className="btn-accent py-3 px-6 text-sm font-bold shadow-lg flex items-center gap-2"
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-sm transition-all shadow-lg flex items-center gap-2 disabled:opacity-50"
               >
                 {loading ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin text-white" />
-                    <span>מריץ מודל מול OpenRouter...</span>
-                  </>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
                 ) : (
-                  <>
-                    <Play className="w-4 h-4 text-white" />
-                    <span>הרצ מודל יחיד בלייב</span>
-                  </>
+                  <Play className="w-4 h-4 fill-slate-950" />
                 )}
+                <span>{loading ? 'מריץ מודל...' : 'הרץ מודל וחלץ מצע מלא'}</span>
               </button>
             </div>
           </div>
         )}
 
-        {/* Execution Mode 2: Multi-Model Batch Mode */}
+        {/* Execution Mode 2: Multi-Model Batch Selection */}
         {isBatchMode && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <div className="text-xs font-bold text-purple-300 flex items-center gap-1.5">
-                <Layers className="w-4 h-4" />
-                <span>בחר מודלים להרצה במקביל ({selectedBatchIds.length} נבחרו מתוך {filteredModels.length}):</span>
+          <div className="space-y-4 bg-purple-950/20 border border-purple-500/30 p-4 rounded-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h4 className="text-sm font-black text-purple-300 font-rubik flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-purple-400" />
+                  <span>מצב הרצה במקביל (Batch Mode)</span>
+                </h4>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  נבחרו {selectedBatchIds.length} מודלים מתוך {filteredModels.length} מסוננים
+                </p>
               </div>
 
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                   onClick={selectAllFreeModels}
-                  className="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 px-2.5 py-1 rounded-lg flex items-center gap-1 font-bold"
+                  className="px-2.5 py-1 rounded-lg text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 font-bold flex items-center gap-1"
                 >
-                  <Gift className="w-3.5 h-3.5" />
-                  <span>בחר את כל החינמיים</span>
+                  <Gift className="w-3 h-3" />
+                  <span>🎁 בחר את כל החינמיים</span>
                 </button>
+
                 <button
                   onClick={selectAllGrounded}
-                  className="text-xs text-cyan-300 bg-slate-900 border border-slate-700 hover:bg-slate-800 px-2.5 py-1 rounded-lg"
+                  className="px-2.5 py-1 rounded-lg text-xs bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-500/30 font-bold flex items-center gap-1"
                 >
-                  בחר תומכי Grounding
+                  <Globe className="w-3 h-3" />
+                  <span>🌐 בחר תומכי Grounding</span>
                 </button>
+
                 <button
                   onClick={selectAllFiltered}
-                  className="text-xs text-slate-300 bg-slate-900 border border-slate-700 hover:bg-slate-800 px-2.5 py-1 rounded-lg"
+                  className="px-2.5 py-1 rounded-lg text-xs bg-blue-500/20 text-blue-300 border border-blue-500/30 hover:bg-blue-500/30 font-bold"
                 >
-                  בחר הכל לפי מסנן
+                  בחר את כל המסוננים ({filteredModels.length})
                 </button>
+
                 <button
                   onClick={clearBatchSelection}
-                  className="text-xs text-slate-400 hover:text-white px-2 py-1"
+                  className="px-2.5 py-1 rounded-lg text-xs bg-slate-800 text-slate-400 border border-slate-700 hover:text-white"
                 >
-                  נקה
+                  נקה בחירה
                 </button>
               </div>
             </div>
 
-            {/* Checkbox grid for batch models */}
-            <div className="max-h-64 overflow-y-auto p-3 rounded-xl bg-slate-900 border border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {/* Checkbox grid of models */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-64 overflow-y-auto p-2 bg-slate-900/90 rounded-xl border border-slate-800">
               {filteredModels.map(m => {
-                const isChecked = selectedBatchIds.includes(m.id);
+                const isSelected = selectedBatchIds.includes(m.id);
                 const isFree = m.isFree || checkModelIsFree(m);
+                const prog = batchProgress[m.id];
+
                 return (
-                  <label
+                  <div
                     key={m.id}
-                    className={`p-2.5 rounded-lg border text-xs font-medium flex items-center justify-between cursor-pointer transition-all ${
-                      isChecked
-                        ? 'bg-purple-950/40 border-purple-500/50 text-white'
-                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                    onClick={() => toggleBatchSelect(m.id)}
+                    className={`p-2.5 rounded-lg border text-xs cursor-pointer flex items-center justify-between transition-all ${
+                      isSelected
+                        ? 'bg-purple-900/40 border-purple-500/60 text-white'
+                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
                     }`}
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       <input
                         type="checkbox"
-                        checked={isChecked}
-                        onChange={() => toggleBatchSelect(m.id)}
-                        className="w-4 h-4 rounded text-purple-600 bg-slate-800 border-slate-700 shrink-0"
+                        checked={isSelected}
+                        onChange={() => {}} // Handled by parent onClick
+                        className="w-4 h-4 rounded text-purple-600 bg-slate-900 border-slate-700 shrink-0"
                       />
-                      <span className="truncate font-mono">{m.name} ({m.company})</span>
+                      <div className="min-w-0">
+                        <div className="font-bold text-white truncate">{m.name}</div>
+                        <div className="text-[10px] text-slate-400 flex items-center gap-1.5">
+                          <span>{m.company}</span>
+                          {isFree && <span className="text-emerald-400 font-bold">🎁 FREE</span>}
+                          {m.supportsGrounding && <span className="text-cyan-400">🌐 Grounded</span>}
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="flex items-center gap-1 shrink-0">
-                      {isFree && (
-                        <span className="px-1.5 py-0.5 text-[10px] bg-amber-500/20 text-amber-300 rounded font-extrabold flex items-center gap-0.5">
-                          🎁 FREE
-                        </span>
-                      )}
-                      {m.supportsGrounding && (
-                        <span className="px-1.5 py-0.5 text-[10px] bg-emerald-500/20 text-emerald-300 rounded font-bold">
-                          🌐 Grounding
-                        </span>
-                      )}
-                    </div>
-                  </label>
+                    {prog && (
+                      <div className="shrink-0 ml-2">
+                        {prog.status === 'running' && <RefreshCw className="w-4 h-4 text-amber-400 animate-spin" />}
+                        {prog.status === 'success' && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
+                        {prog.status === 'error' && <AlertCircle className="w-4 h-4 text-rose-400" title={prog.error} />}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>
 
-            <div className="flex justify-end">
+            <div className="flex items-center justify-between pt-2">
+              <label className="flex items-center gap-2 text-xs font-bold text-white cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={batchGroundedSetting}
+                  onChange={(e) => setBatchGroundedSetting(e.target.checked)}
+                  className="w-4 h-4 rounded text-purple-600 bg-slate-800 border-slate-700"
+                />
+                <span>הפעל חיפוש בזמן אמת (Grounding) למודלים נתמכים ב-Batch</span>
+              </label>
+
               <button
                 onClick={handleRunBatchPrompts}
                 disabled={loading || selectedBatchIds.length === 0}
-                className="btn-accent py-3 px-6 text-sm font-bold shadow-lg flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600"
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white font-black text-sm transition-all shadow-lg flex items-center gap-2 disabled:opacity-50"
               >
                 {loading ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin text-white" />
-                    <span>מריץ {selectedBatchIds.length} מודלים במקביל...</span>
-                  </>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
                 ) : (
-                  <>
-                    <Play className="w-4 h-4 text-white" />
-                    <span>הרצ {selectedBatchIds.length} מודלים במקביל (Batch Run)</span>
-                  </>
+                  <Play className="w-4 h-4 fill-white" />
                 )}
+                <span>{loading ? 'מריץ אצווה במקביל...' : `הרץ ${selectedBatchIds.length} מודלים במקביל`}</span>
               </button>
             </div>
           </div>
         )}
 
-        {/* Batch Progress Indicators */}
-        {loading && isBatchMode && (
-          <div className="p-4 rounded-xl bg-slate-900 border border-purple-500/40 space-y-2">
-            <h4 className="text-xs font-bold text-purple-300">התקדמות הרצה מרובה:</h4>
-            <div className="space-y-1.5 max-h-40 overflow-y-auto">
-              {Object.entries(batchProgress).map(([modelId, info]) => (
-                <div key={modelId} className="flex items-center justify-between text-xs p-2 rounded bg-slate-950">
-                  <span className="font-mono text-slate-200">{modelId}</span>
-                  {info.status === 'pending' && <span className="text-slate-400">ממתין...</span>}
-                  {info.status === 'running' && <span className="text-amber-400 flex items-center gap-1"><RefreshCw className="w-3 h-3 animate-spin" /> מריץ...</span>}
-                  {info.status === 'done' && <span className="text-emerald-400 font-bold">הושלם ✓</span>}
-                  {info.status === 'error' && (
-                    <button
-                      onClick={() => {
-                        if (info.rawContent) {
-                          setFailedRawText(info.rawContent);
-                          setManualRawInput(info.rawContent);
-                          setSelectedSingleId(modelId);
-                          setIsBatchMode(false);
-                        }
-                      }}
-                      className="text-rose-400 font-bold hover:underline flex items-center gap-1"
-                    >
-                      שגיאה ❌ ({info.error}) - לחץ לתיקון
-                    </button>
-                  )}
+        {/* Disk Save Notification */}
+        {diskSaveSuccess && (
+          <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center gap-2 animate-pulse">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            <span>התוצאות נשמרו בהצלחה ישירות לקובץ הפיזי src/data/modelsData.json ובזיכרון!</span>
+          </div>
+        )}
+
+        {/* Error Alert */}
+        {error && (
+          <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs space-y-2">
+            <div className="font-bold flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+              <span>{error}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Raw Response Recovery Panel */}
+        {failedRawText && (
+          <div className="p-4 rounded-xl bg-amber-950/20 border border-amber-500/40 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-bold text-amber-300">
+                <Edit3 className="w-4 h-4 text-amber-400" />
+                <span>שחזור טקסט גולמי (Raw Text JSON Recovery):</span>
+              </div>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(manualRawInput);
+                }}
+                className="text-[11px] text-slate-300 hover:text-white bg-slate-900 border border-slate-700 px-2.5 py-1 rounded-lg flex items-center gap-1"
+              >
+                <Copy className="w-3 h-3" />
+                <span>העתק טקסט גולמי</span>
+              </button>
+            </div>
+
+            <p className="text-[11px] text-slate-400">
+              פענוח ה-JSON מהמודל נכשל. תוכל לערוך ולתקן את הטקסט הגולמי ולנסות לפענח שנית:
+            </p>
+
+            <textarea
+              value={manualRawInput}
+              onChange={(e) => setManualRawInput(e.target.value)}
+              rows={6}
+              className="w-full p-3 rounded-lg bg-slate-950 border border-slate-800 text-white text-xs font-mono focus:outline-none focus:border-amber-500"
+            />
+
+            <button
+              onClick={handleRetryManualJson}
+              className="px-4 py-2 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs hover:bg-amber-400 flex items-center gap-1.5 shadow-md"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>🔄 נסה לפענח JSON מחדש ולשמור לקובץ</span>
+            </button>
+          </div>
+        )}
+
+        {/* Results Preview Cards */}
+        {lastResults.length > 0 && (
+          <div className="space-y-3 pt-2">
+            <h4 className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+              <Sparkles className="w-4 h-4 text-cyan-400" />
+              <span>תוצאות אחרונות שנוצרו ונשמרו ({lastResults.length} מודלים):</span>
+            </h4>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {lastResults.map(r => (
+                <div key={r.id} className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-white">{r.candidate?.name}</span>
+                    <span className="text-xs text-cyan-400 font-mono">{r.modelName}</span>
+                  </div>
+                  <p className="text-xs text-slate-300 line-clamp-2">{r.candidate?.personaSummary}</p>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* Error Banner */}
-        {error && (
-          <div className="p-4 rounded-xl bg-rose-950/40 border border-rose-500/40 text-rose-300 text-xs flex items-center gap-2">
-            <AlertCircle className="w-5 h-5 shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
-
-        {/* Disk Save Success Notification */}
-        {diskSaveSuccess && (
-          <div className="p-3 rounded-xl bg-emerald-950/50 border border-emerald-500/40 text-emerald-300 text-xs flex items-center gap-2">
-            <CheckCircle2 className="w-5 h-5 shrink-0" />
-            <span>התוצאות נשמרו בהצלחה ישירות לקובץ הפיזי <strong>src/data/modelsData.json</strong> בדיסק!</span>
-          </div>
-        )}
-
       </div>
-
-      {/* Raw Text Recovery & Manual JSON Retry Panel */}
-      {failedRawText && (
-        <div className="bg-[#0f172a] rounded-2xl p-6 border border-amber-500/50 space-y-4 shadow-2xl">
-          <div className="flex items-center justify-between flex-wrap gap-2 border-b border-slate-800 pb-3">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="w-6 h-6 text-amber-400" />
-              <div>
-                <h4 className="text-base font-bold text-white font-rubik">
-                  טקסט גולמי שנשמר מהמודל (Raw Response Recovery)
-                </h4>
-                <p className="text-xs text-slate-400">
-                  התשובה מהמודל לא אבדה! ניתן לתקן ידנית בתיבת הטקסט ולנסות לפענח שוב.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(manualRawInput || failedRawText);
-                }}
-                className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1.5"
-              >
-                <Copy className="w-3.5 h-3.5 text-cyan-400" />
-                <span>העתק טקסט גולמי</span>
-              </button>
-
-              <button
-                onClick={handleRetryParseRaw}
-                className="btn-primary text-xs py-1.5 px-4 flex items-center gap-1.5"
-              >
-                <RefreshCw className="w-3.5 h-3.5 text-emerald-300" />
-                <span>🔄 נסה לפענח JSON מחדש</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-300 flex items-center gap-1">
-              <Edit3 className="w-3.5 h-3.5 text-amber-400" />
-              <span>ערוך/בדוק את הטקסט הגולמי שהתקבל מהמודל:</span>
-            </label>
-            <textarea
-              value={manualRawInput}
-              onChange={(e) => setManualRawInput(e.target.value)}
-              rows={12}
-              className="w-full p-4 rounded-xl bg-[#090d16] font-mono text-xs text-slate-200 border border-slate-800 focus:outline-none focus:border-amber-500 leading-relaxed"
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Results Section */}
-      {lastResults.length > 0 && (
-        <div className="bg-[#0f172a] rounded-2xl p-6 border border-emerald-500/40 space-y-4 shadow-2xl">
-          <div className="flex items-center justify-between flex-wrap gap-3 pb-3 border-b border-slate-800">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-6 h-6 text-emerald-400" />
-              <h4 className="text-lg font-bold text-white font-rubik">
-                התקבלו {lastResults.length} תשובות מ-OpenRouter!
-              </h4>
-            </div>
-
-            <button
-              onClick={handleSaveAllToDisk}
-              className="btn-primary text-xs py-2 px-4 flex items-center gap-1.5"
-            >
-              <Save className="w-4 h-4 text-emerald-300" />
-              <span>שמור את כל המועמדים בדיסק (modelsData.json)</span>
-            </button>
-          </div>
-
-          <div className="space-y-3 max-h-96 overflow-y-auto">
-            {lastResults.map((res, idx) => (
-              <div key={idx} className="p-4 rounded-xl bg-[#090d16] border border-slate-800 space-y-2">
-                <div className="flex items-center justify-between text-xs font-bold">
-                  <span className="text-cyan-400">{res.modelName} ({res.company})</span>
-                  <span className="text-amber-400">שם המועמד: {res.candidate?.name}</span>
-                </div>
-                <div className="text-xs text-slate-300 line-clamp-2">{res.candidate?.personaSummary}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-    </section>
+    </div>
   );
 }

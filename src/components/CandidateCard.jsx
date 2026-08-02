@@ -96,9 +96,9 @@ export default function CandidateCard({ candidateData, onSelectCandidate, onVote
           </div>
         </div>
 
-        {/* Radar Chart */}
-        <div className="pt-2 flex justify-center">
-          <ValueRadarChart valueRatings={valueRatings} size={200} />
+        {/* Values Summary (Top 3) */}
+        <div className="pt-1">
+          <ValueRadarChart valueRatings={valueRatings} limit={3} />
         </div>
 
       </div>

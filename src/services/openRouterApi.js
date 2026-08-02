@@ -54,6 +54,64 @@ export function checkModelIsFree(model) {
 }
 
 /**
+ * Helper to assign unique brand styling (colors, glow, icon) to AI models/providers
+ */
+export function getModelStyling(modelId = '', companyName = '') {
+  const id = modelId.toLowerCase();
+  const comp = companyName.toLowerCase();
+
+  if (id.includes('anthropic') || id.includes('claude') || comp.includes('anthropic')) {
+    return { badgeColor: "#d97706", accentGlow: "rgba(217, 119, 6, 0.45)", avatarIcon: "Brain" };
+  }
+  if (id.includes('openai') || id.includes('gpt') || comp.includes('openai')) {
+    return { badgeColor: "#10b981", accentGlow: "rgba(16, 185, 129, 0.45)", avatarIcon: "Zap" };
+  }
+  // Added styling for OpenRouter models
+  if (id.includes('openrouter') || comp.includes('openrouter')) {
+    return { badgeColor: "#991b1b", accentGlow: "rgba(153, 27, 27, 0.45)", avatarIcon: "Star" };
+  }
+  if (id.includes('google') || id.includes('gemini') || id.includes('gemma') || comp.includes('google')) {
+    return { badgeColor: "#0284c7", accentGlow: "rgba(2, 132, 199, 0.45)", avatarIcon: "Sparkles" };
+  }
+  if (id.includes('deepseek') || comp.includes('deepseek')) {
+    return { badgeColor: "#06b6d4", accentGlow: "rgba(6, 182, 212, 0.45)", avatarIcon: "Cpu" };
+  }
+  if (id.includes('meta') || id.includes('llama') || comp.includes('meta')) {
+    return { badgeColor: "#8b5cf6", accentGlow: "rgba(139, 92, 246, 0.45)", avatarIcon: "Flame" };
+  }
+  if (id.includes('mistral') || comp.includes('mistral')) {
+    return { badgeColor: "#f97316", accentGlow: "rgba(249, 115, 22, 0.45)", avatarIcon: "Rocket" };
+  }
+  if (id.includes('nvidia') || id.includes('nemotron') || comp.includes('nvidia')) {
+    return { badgeColor: "#84cc16", accentGlow: "rgba(132, 204, 22, 0.45)", avatarIcon: "Compass" };
+  }
+  if (id.includes('qwen') || id.includes('alibaba') || comp.includes('alibaba')) {
+    return { badgeColor: "#d946ef", accentGlow: "rgba(217, 70, 239, 0.45)", avatarIcon: "Sparkles" };
+  }
+  if (id.includes('x-ai') || id.includes('grok') || comp.includes('xai')) {
+    return { badgeColor: "#f43f5e", accentGlow: "rgba(244, 63, 94, 0.45)", avatarIcon: "Rocket" };
+  }
+  if (id.includes('perplexity') || id.includes('sonar')) {
+    return { badgeColor: "#14b8a6", accentGlow: "rgba(20, 184, 166, 0.45)", avatarIcon: "Globe" };
+  }
+
+  // Dynamic hash fallback palette for unique model styling
+  const colors = [
+    { badgeColor: "#ec4899", accentGlow: "rgba(236, 72, 153, 0.45)", avatarIcon: "Sparkles" },
+    { badgeColor: "#6366f1", accentGlow: "rgba(99, 102, 241, 0.45)", avatarIcon: "Cpu" },
+    { badgeColor: "#eab308", accentGlow: "rgba(234, 179, 8, 0.45)", avatarIcon: "Brain" },
+    { badgeColor: "#059669", accentGlow: "rgba(5, 150, 105, 0.45)", avatarIcon: "Zap" },
+  ];
+
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = id.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % colors.length;
+  return colors[index];
+}
+
+/**
  * Fetch available models dynamically from OpenRouter OpenAPI endpoint
  */
 export async function fetchOpenRouterModels(searchQuery = '') {
@@ -78,11 +136,15 @@ export async function fetchOpenRouterModels(searchQuery = '') {
       const supportsGrounding = checkModelGroundingSupport(m);
       const isFree = checkModelIsFree(m);
       const company = m.id.includes('/') ? m.id.split('/')[0] : 'AI';
+      const styling = getModelStyling(m.id, company);
 
       return {
         id: m.id,
         name: m.name || m.id,
         company: company.charAt(0).toUpperCase() + company.slice(1),
+        badgeColor: styling.badgeColor,
+        accentGlow: styling.accentGlow,
+        avatarIcon: styling.avatarIcon,
         description: m.description || '',
         contextLength: m.context_length || 0,
         pricing: m.pricing || {},
@@ -111,10 +173,12 @@ export async function runModelPrompt({ apiKey, modelId, modelConfig, isGrounded 
 
   const systemInstructions = `${SYSTEM_ROLEPLAY_PROMPT}
 
-IMPORTANT INSTRUCTIONS FOR OUTPUT FORMAT:
-You MUST respond strictly in valid JSON format corresponding to the schema.
-Do NOT output any intro or outro markdown text outside the JSON. Return only the JSON object.
-Ensure all double quotes inside strings (especially Hebrew acronyms like צה"ל, יו"ש, ביו"ש, בג"ץ, תב"ע) are properly escaped as \\" or written with gershayim (״).`;
+CRITICAL COMPREHENSIVE OUTPUT INSTRUCTIONS:
+- You MUST rate yourself on the Political Spectrum in politicalSpectrum (positionScore: 1-100 where 1 = שמאל עמוק/רדיקלי, 50 = מרכז, 100 = ימין עמוק/רדיקלי) and explain your selfPlacementJustification.
+- You MUST provide a full, detailed, deep plan for ALL 9 governance domains in operationalPlatform (1. ביטחון לאומי וחוץ, 2. צבא ומילואים, 3. ביטחון פנים, 4. כלכלה ואוצר, 5. פנים, 6. חינוך, 7. בריאות, 8. משפטים, 9. תקשורת).
+- For the top 3 priorities, ALWAYS include first100Days, twoYearGoal, and kpi!
+- Do NOT abbreviate, shorten, or skip any domain.
+- Ensure all double quotes inside strings (especially Hebrew acronyms like צה"ל, יו"ש, ביו"ש, בג"ץ, תב"ע, ד"ר) are properly escaped as \\" or written with gershayim (״).`;
 
   // Always enable OpenRouter's Response Healing plugin for automatic provider-side JSON repair
   const plugins = [{ id: "response-healing" }];
@@ -128,7 +192,7 @@ Ensure all double quotes inside strings (especially Hebrew acronyms like צה"ל
     messages: [
       {
         role: "system",
-        content: "אתה מנהיג אסטרטגי פוליטי מנוסה. עליך לענות בעברית רהוטה ומדויקת בלבד ולחזור בפורמט JSON תקני ובלעדי."
+        content: "אתה מנהיג אסטרטגי פוליטי מנוסה. עליך לענות בעברית רהוטה ומדויקת בלבד ולחזור בפורמט JSON תקני, מלא ומפורט בלבד."
       },
       {
         role: "user",
@@ -143,9 +207,7 @@ Ensure all double quotes inside strings (especially Hebrew acronyms like צה"ל
         schema: MODEL_RESPONSE_JSON_SCHEMA
       }
     },
-    plugins: plugins,
-    temperature: 0.7,
-    max_tokens: 8000
+    plugins: plugins
   };
 
   let response = await fetch(OPENROUTER_COMPLETIONS_URL, {
@@ -195,20 +257,23 @@ Ensure all double quotes inside strings (especially Hebrew acronyms like צה"ל
     throw customErr;
   }
 
+  const styling = getModelStyling(modelId, modelConfig?.company || '');
+
   return {
     id: `custom_${Date.now()}_${modelId.replace(/[^a-zA-Z0-9]/g, '_')}`,
     modelId: modelId,
     modelName: modelConfig?.name || modelId,
     company: modelConfig?.company || "OpenRouter",
-    badgeColor: modelConfig?.badgeColor || "#3b82f6",
-    accentGlow: modelConfig?.accentGlow || "rgba(59, 130, 246, 0.4)",
-    avatarIcon: modelConfig?.avatarIcon || "Sparkles",
+    badgeColor: modelConfig?.badgeColor || styling.badgeColor,
+    accentGlow: modelConfig?.accentGlow || styling.accentGlow,
+    avatarIcon: modelConfig?.avatarIcon || styling.avatarIcon,
     grounded: isGrounded,
     timestamp: new Date().toISOString(),
     formattedTimestamp: new Date().toLocaleString("he-IL", {
       dateStyle: "medium",
       timeStyle: "short"
     }),
+    rawResponse: rawChoiceContent,
     ...parsedResponse
   };
 }

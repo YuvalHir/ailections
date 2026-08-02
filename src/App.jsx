@@ -5,6 +5,7 @@ import CandidateCard from './components/CandidateCard';
 import CandidateModal from './components/CandidateModal';
 import CompareMatrix from './components/CompareMatrix';
 import DomainExplorer from './components/DomainExplorer';
+import PoliticalSpectrumPage from './components/PoliticalSpectrumPage';
 import UserVoting from './components/UserVoting';
 import DevOpenRouterStudio from './components/DevOpenRouterStudio';
 import Footer from './components/Footer';
@@ -112,6 +113,14 @@ export default function App() {
               </div>
             </section>
           </>
+        )}
+
+        {/* Tab: Political Spectrum Page */}
+        {activeTab === 'spectrum' && (
+          <PoliticalSpectrumPage
+            candidatesData={candidatesData}
+            onSelectCandidate={setSelectedCandidateModal}
+          />
         )}
 
         {/* Tab 2: Compare Matrix View */}

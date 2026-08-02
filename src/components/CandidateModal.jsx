@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Globe, UserCheck, Award, Clock, Target, TrendingUp, AlertTriangle } from 'lucide-react';
 import ValueRadarChart from './ValueRadarChart';
-import { DOMAINS, VALUES_LIST } from '../data/domains';
+import { DOMAINS } from '../data/domains';
 
 export default function CandidateModal({ candidateData, onClose, onVote, userVotes }) {
   if (!candidateData) return null;
@@ -222,26 +222,10 @@ export default function CandidateModal({ candidateData, onClose, onVote, userVot
                 </div>
               </div>
 
-              {/* Value Ratings Radar & List */}
+              {/* Value Ratings Breakdown */}
               <div className="lg:col-span-5 space-y-4">
-                <div className="bg-slate-900/80 border border-slate-800 p-3 sm:p-4 rounded-2xl flex flex-col items-center">
-                  <h4 className="text-xs font-bold text-slate-300 mb-2">דיאגרמת ערכים (0-100)</h4>
-                  <ValueRadarChart valueRatings={valueRatings} size={220} />
-                </div>
-
-                <div className="space-y-2 max-h-72 sm:max-h-80 overflow-y-auto pr-1">
-                  {VALUES_LIST.map(v => {
-                    const item = valueRatings[v.key] || { score: 50, justification: "" };
-                    return (
-                      <div key={v.key} className="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
-                        <div className="flex items-center justify-between text-xs font-bold mb-1">
-                          <span className="text-white">{v.label}</span>
-                          <span className="text-cyan-400 font-extrabold text-xs sm:text-sm">{item.score}/100</span>
-                        </div>
-                        <p className="text-[11px] sm:text-xs text-slate-400 leading-normal">{item.justification}</p>
-                      </div>
-                    );
-                  })}
+                <div className="bg-slate-900/80 border border-slate-800 p-4 sm:p-5 rounded-2xl">
+                  <ValueRadarChart valueRatings={valueRatings} />
                 </div>
               </div>
 

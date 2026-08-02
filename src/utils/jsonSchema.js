@@ -10,33 +10,49 @@ export const MODEL_RESPONSE_JSON_SCHEMA = {
         background: { type: "string" },
         personaSummary: { type: "string" }
       },
-      required: ["name", "age", "background", "personaSummary"]
+      required: ["name", "age", "origin", "background", "personaSummary"]
+    },
+    politicalSpectrum: {
+      type: "object",
+      properties: {
+        positionScore: { type: "number" },
+        positionLabel: { type: "string" },
+        selfPlacementJustification: { type: "string" }
+      },
+      required: ["positionScore", "positionLabel", "selfPlacementJustification"]
     },
     ideologicalPrinciples: {
       type: "array",
-      items: { type: "string" }
+      items: { type: "string" },
+      minItems: 5
     },
     valueRatings: {
       type: "object",
       properties: {
-        nationalSecurity: { type: "object", properties: { score: { type: "number" }, justification: { type: "string" } } },
-        personalFreedom: { type: "object", properties: { score: { type: "number" }, justification: { type: "string" } } },
-        equality: { type: "object", properties: { score: { type: "number" }, justification: { type: "string" } } },
-        economicEfficiency: { type: "object", properties: { score: { type: "number" }, justification: { type: "string" } } },
-        socialJustice: { type: "object", properties: { score: { type: "number" }, justification: { type: "string" } } },
-        traditionAndJewishIdentity: { type: "object", properties: { score: { type: "number" }, justification: { type: "string" } } },
-        liberalDemocracy: { type: "object", properties: { score: { type: "number" }, justification: { type: "string" } } },
-        governance: { type: "object", properties: { score: { type: "number" }, justification: { type: "string" } } },
-        socialUnity: { type: "object", properties: { score: { type: "number" }, justification: { type: "string" } } },
-        internationalRelations: { type: "object", properties: { score: { type: "number" }, justification: { type: "string" } } }
-      }
+        nationalSecurity: { type: "object", properties: { score: { type: "number" }, justification: { type: "string" } }, required: ["score", "justification"] },
+        personalFreedom: { type: "object", properties: { score: { type: "number" }, justification: { type: "string" } }, required: ["score", "justification"] },
+        equality: { type: "object", properties: { score: { type: "number" }, justification: { type: "string" } }, required: ["score", "justification"] },
+        economicEfficiency: { type: "object", properties: { score: { type: "number" }, justification: { type: "string" } }, required: ["score", "justification"] },
+        socialJustice: { type: "object", properties: { score: { type: "number" }, justification: { type: "string" } }, required: ["score", "justification"] },
+        traditionAndJewishIdentity: { type: "object", properties: { score: { type: "number" }, justification: { type: "string" } }, required: ["score", "justification"] },
+        liberalDemocracy: { type: "object", properties: { score: { type: "number" }, justification: { type: "string" } }, required: ["score", "justification"] },
+        governance: { type: "object", properties: { score: { type: "number" }, justification: { type: "string" } }, required: ["score", "justification"] },
+        socialUnity: { type: "object", properties: { score: { type: "number" }, justification: { type: "string" } }, required: ["score", "justification"] },
+        internationalRelations: { type: "object", properties: { score: { type: "number" }, justification: { type: "string" } }, required: ["score", "justification"] }
+      },
+      required: [
+        "nationalSecurity", "personalFreedom", "equality", "economicEfficiency",
+        "socialJustice", "traditionAndJewishIdentity", "liberalDemocracy",
+        "governance", "socialUnity", "internationalRelations"
+      ]
     },
     priorities: {
       type: "object",
       properties: {
         top3DomainIds: { type: "array", items: { type: "number" } },
         tradeoffsExplanation: { type: "string" }
-      }
+      },
+      required: ["top3DomainIds", "tradeoffsExplanation"]
     },
     operationalPlatform: {
       type: "array",
@@ -50,46 +66,50 @@ export const MODEL_RESPONSE_JSON_SCHEMA = {
           first100Days: { type: "string" },
           twoYearGoal: { type: "string" },
           kpi: { type: "string" }
-        }
-      }
+        },
+        required: ["domainId", "domainTitle", "plan", "isTopPriority"]
+      },
+      minItems: 9
     },
     selfCriticism: {
       type: "object",
       properties: {
         strongestCounterArgument: { type: "string" },
         rebuttal: { type: "string" }
-      }
+      },
+      required: ["strongestCounterArgument", "rebuttal"]
     }
-  }
+  },
+  required: [
+    "candidate",
+    "politicalSpectrum",
+    "ideologicalPrinciples",
+    "valueRatings",
+    "priorities",
+    "operationalPlatform",
+    "selfCriticism"
+  ]
 };
 
 /**
- * Replaces unescaped double quotes inside Hebrew acronyms and titles (e.g. ד"ר, עו"ד, ביו"ש, תב"ע, צה"ל, בג"ץ, יו"ש)
+ * Strips trailing commas before closing braces `}` or brackets `]`
+ */
+function fixTrailingCommas(jsonStr) {
+  return jsonStr
+    .replace(/,\s*\}/g, '}')
+    .replace(/,\s*\]/g, ']');
+}
+
+/**
+ * Replaces unescaped double quotes inside Hebrew acronyms and titles (e.g. ד"ר, עו"ד, ביו"ש, תב"ע, צה"ל, בג"ץ, יו"ש, (מיל') ד"ר)
  * with Hebrew Gershayim ״ (U+05F4) so JSON parser doesn't break string boundaries.
  */
 function fixHebrewQuotes(jsonStr) {
   return jsonStr
-    // 1. Any quote between two Hebrew characters (e.g. ד"ר, צה"ל, ביו"ש, תב"ע, בג"ץ, יו"ש)
+    // Quote between two Hebrew characters (e.g. ד"ר, צה"ל, ביו"ש)
     .replace(/([\u0590-\u05FF])"([\u0590-\u05FF])/g, '$1״$2')
-    // 2. Any quote after Hebrew letter followed by Hebrew letter or punctuation
-    .replace(/([\u0590-\u05FF]+)"(?=[\u0590-\u05FF\s,.:;\]\}]|$)/g, '$1״');
-}
-
-/**
- * Fixes loose key-value pairs or missing opening braces in JSON arrays:
- * e.g. `}, "topic": 9, "domainId": 9` -> `}, { "topic": 9, "domainId": 9`
- * e.g. `}, "domainId": 7` -> `}, { "domainId": 7`
- */
-function fixMissingArrayObjectBraces(jsonStr) {
-  let cleaned = jsonStr;
-  
-  // Clean loose key-values like `"topic": 9,` before `"domainId"` inside arrays
-  cleaned = cleaned.replace(/\},\s*"topic"\s*:\s*\d+\s*,\s*/g, '}, ');
-
-  // Wrap loose keys in array after closing brace with opening brace `{`
-  cleaned = cleaned.replace(/\},\s*"([a-zA-Z0-9_-]+)"\s*:/g, '}, { "$1":');
-  
-  return cleaned;
+    // Quote after Hebrew word followed by space, parenthesis, or punctuation (e.g. ד"ר אלון, (מיל') ד"ר)
+    .replace(/([\u0590-\u05FF]+)"(?=[\s,\.\)\]\}]|$)/g, '$1״');
 }
 
 /**
@@ -101,7 +121,9 @@ function sanitizeControlCharacters(jsonStr) {
 
   for (let i = 0; i < jsonStr.length; i++) {
     const char = jsonStr[i];
-    if (char === '"' && (i === 0 || jsonStr[i - 1] !== '\\')) {
+    const prevChar = i > 0 ? jsonStr[i - 1] : '';
+
+    if (char === '"' && prevChar !== '\\') {
       inString = !inString;
       result += char;
     } else if (inString) {
@@ -125,6 +147,23 @@ function sanitizeControlCharacters(jsonStr) {
   }
 
   return result;
+}
+
+/**
+ * Fixes loose key-value pairs or missing opening braces in JSON arrays:
+ * e.g. `}, "topic": 9, "domainId": 9` -> `}, { "topic": 9, "domainId": 9`
+ * e.g. `}, "domainId": 7` -> `}, { "domainId": 7`
+ */
+function fixMissingArrayObjectBraces(jsonStr) {
+  let cleaned = jsonStr;
+  
+  // Clean loose key-values like `"topic": 9,` before `"domainId"` inside arrays
+  cleaned = cleaned.replace(/\},\s*"topic"\s*:\s*\d+\s*,\s*/g, '}, ');
+
+  // Wrap loose keys in array after closing brace with opening brace `{`
+  cleaned = cleaned.replace(/\},\s*"([a-zA-Z0-9_-]+)"\s*:/g, '}, { "$1":');
+  
+  return cleaned;
 }
 
 /**
@@ -168,7 +207,7 @@ function repairTruncatedJson(str) {
 
 /**
  * Lossless Fallback: Regex-based field extractor when JSON.parse fails completely.
- * Guarantees zero data loss and extracts real scores & justifications even for malformed LLM outputs.
+ * Guarantees zero data loss and extracts real scores, justifications, first100Days, twoYearGoal, and kpi.
  */
 function extractPartialDataWithRegex(rawText) {
   const extractField = (pattern, fallback = "") => {
@@ -183,6 +222,12 @@ function extractPartialDataWithRegex(rawText) {
   const background = extractField(/"background"\s*:\s*"([^"]+)"/, "קצין מילואים בכיר לשעבר ביחידת המודיעין.");
   const personaSummary = extractField(/"personaSummary"\s*:\s*"([^"]+)"/, "מנהיג ריאליסט-טכנוקרטי המשלב עוצמה ביטחונית עם משמעת כלכלית.");
 
+  // Extract political spectrum score
+  const psScoreMatch = rawText.match(/"positionScore"\s*:\s*(\d+)/);
+  const positionScore = psScoreMatch ? parseInt(psScoreMatch[1], 10) : 75;
+  const positionLabel = extractField(/"positionLabel"\s*:\s*"([^"]+)"/, "ימין-מרכז");
+  const selfPlacementJustification = extractField(/"selfPlacementJustification"\s*:\s*"([^"]+)"/, personaSummary);
+
   // Extract principles array
   const principles = [];
   const principlesBlock = rawText.match(/"ideologicalPrinciples"\s*:\s*\[([\s\S]*?)\]/);
@@ -196,7 +241,7 @@ function extractPartialDataWithRegex(rawText) {
     }
   }
 
-  // Extract valueRatings scores & justifications via regex
+  // Extract valueRatings scores & justifications via regex (handles quotes inside justifications)
   const valueRatings = {};
   const ratingKeys = [
     "nationalSecurity", "personalFreedom", "equality", "economicEfficiency",
@@ -205,7 +250,7 @@ function extractPartialDataWithRegex(rawText) {
   ];
 
   ratingKeys.forEach(k => {
-    const objRegex = new RegExp(`"${k}"\\s*:\\s*\\{\\s*"score"\\s*:\\s*(\\d+)(?:[\\s\\S]*?"justification"\\s*:\\s*"([^"]+)")?`, "i");
+    const objRegex = new RegExp(`"${k}"\\s*:\\s*\\{\\s*"score"\\s*:\\s*(\\d+)(?:[\\s\\S]*?"justification"\\s*:\s*"([^"\\n\\r]+?)")?`, "i");
     const numRegex = new RegExp(`"${k}"\\s*:\\s*(\\d+)`, "i");
 
     const mObj = rawText.match(objRegex);
@@ -225,24 +270,37 @@ function extractPartialDataWithRegex(rawText) {
     }
   });
 
-  // Extract operational platform domains
+  // Extract operational platform domains including first100Days, twoYearGoal, and kpi
   const operationalPlatform = [];
-  const domainRegex = /\{\s*"domainId"\s*:\s*(\d+)[\s\S]*?"domainTitle"\s*:\s*"([^"]+)"[\s\S]*?"plan"\s*:\s*"([^"]+)"/g;
-  let dMatch;
-  while ((dMatch = domainRegex.exec(rawText)) !== null) {
-    operationalPlatform.push({
-      domainId: parseInt(dMatch[1], 10),
-      domainTitle: dMatch[2],
-      plan: dMatch[3],
-      isTopPriority: dMatch[1] === "1" || dMatch[1] === "2" || dMatch[1] === "4",
-      first100Days: "",
-      twoYearGoal: "",
-      kpi: ""
-    });
+  const domainBlockRegex = /\{\s*"domainId"\s*:\s*(\d+)[\s\S]*?\}(?=\s*[,\]])/g;
+  let blockMatch;
+  while ((blockMatch = domainBlockRegex.exec(rawText)) !== null) {
+    const blockText = blockMatch[0];
+    const domainIdMatch = blockText.match(/"domainId"\s*:\s*(\d+)/);
+    const domainTitleMatch = blockText.match(/"domainTitle"\s*:\s*"([^"]+)"/);
+    const planMatch = blockText.match(/"plan"\s*:\s*"([^"]+)"/);
+    const topPriorityMatch = blockText.match(/"isTopPriority"\s*:\s*(true|false)/i);
+    const first100Match = blockText.match(/"first100Days"\s*:\s*"([^"]+)"/);
+    const twoYearMatch = blockText.match(/"twoYearGoal"\s*:\s*"([^"]+)"/);
+    const kpiMatch = blockText.match(/"kpi"\s*:\s*"([^"]+)"/);
+
+    if (domainIdMatch && domainTitleMatch) {
+      const dId = parseInt(domainIdMatch[1], 10);
+      operationalPlatform.push({
+        domainId: dId,
+        domainTitle: domainTitleMatch[1],
+        plan: planMatch ? planMatch[1] : "",
+        isTopPriority: topPriorityMatch ? topPriorityMatch[1].toLowerCase() === "true" : (dId === 1 || dId === 2 || dId === 4),
+        first100Days: first100Match ? first100Match[1] : "",
+        twoYearGoal: twoYearMatch ? twoYearMatch[1] : "",
+        kpi: kpiMatch ? kpiMatch[1] : ""
+      });
+    }
   }
 
   return sanitizeParsedData({
     candidate: { name, age, origin, background, personaSummary },
+    politicalSpectrum: { positionScore, positionLabel, selfPlacementJustification },
     ideologicalPrinciples: principles.length > 0 ? principles : undefined,
     valueRatings: Object.keys(valueRatings).length > 0 ? valueRatings : undefined,
     operationalPlatform: operationalPlatform.length > 0 ? operationalPlatform : undefined,
@@ -255,7 +313,7 @@ function extractPartialDataWithRegex(rawText) {
 
 /**
  * Robust JSON extraction and parsing helper
- * Handles markdown code blocks, unescaped Hebrew acronym quotes, missing array braces, bad control chars, truncated JSON, and regex fallback.
+ * Handles markdown code blocks, trailing commas, unescaped Hebrew acronym quotes, missing array braces, bad control chars, truncated JSON, and regex fallback.
  */
 export function cleanAndParseJson(rawText) {
   if (!rawText) throw new Error("תוכן ריק שהתקבל מהמודל");
@@ -283,8 +341,9 @@ export function cleanAndParseJson(rawText) {
     }
   }
 
-  // Pre-fix Hebrew quotes (e.g. ד"ר, ביו"ש -> ד״ר, ביו״ש) and array object braces BEFORE control character sanitization
-  const fixedHebrew = fixHebrewQuotes(trimmed);
+  // Pre-fix trailing commas, Hebrew quotes, missing array braces, and control characters
+  const fixedCommas = fixTrailingCommas(trimmed);
+  const fixedHebrew = fixHebrewQuotes(fixedCommas);
   const fixedBraces = fixMissingArrayObjectBraces(fixedHebrew);
   const sanitized = sanitizeControlCharacters(fixedBraces);
 
@@ -330,6 +389,11 @@ function sanitizeParsedData(data) {
       origin: data.candidate?.origin || "ישראל",
       background: data.candidate?.background || "ניסיון ניהולי ואסטרטגי",
       personaSummary: data.candidate?.personaSummary || "חזון מנהיגות לישראל 2026"
+    },
+    politicalSpectrum: {
+      positionScore: typeof data.politicalSpectrum?.positionScore === 'number' ? data.politicalSpectrum.positionScore : 75,
+      positionLabel: data.politicalSpectrum?.positionLabel || "ימין-מרכז",
+      selfPlacementJustification: data.politicalSpectrum?.selfPlacementJustification || data.candidate?.personaSummary || ""
     },
     ideologicalPrinciples: Array.isArray(data.ideologicalPrinciples) && data.ideologicalPrinciples.length > 0
       ? data.ideologicalPrinciples
