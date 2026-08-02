@@ -11,6 +11,7 @@ import Footer from './components/Footer';
 
 import staticModelsData from './data/modelsData.json';
 import { getUserVotes, castVote, getCustomModels, saveCustomModel, fetchAggregateVotes, getUserVotedModel } from './services/storage';
+import { isDevStudioAllowed } from './services/openRouterApi';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('candidates'); // 'candidates' | 'compare' | 'domains' | 'voting'
@@ -28,7 +29,7 @@ export default function App() {
 
     setUserVotedModel(getUserVotedModel());
 
-    // Fetch live votes (from Vercel KV or local storage)
+    // Fetch live votes (from Neon Postgres, Vercel KV, or local storage)
     fetchAggregateVotes().then(initialVotes => {
       if (initialVotes) setUserVotes(initialVotes);
     });
@@ -56,7 +57,7 @@ export default function App() {
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        devMode={devMode}
+        devMode={isDevStudioAllowed && devMode}
         setDevMode={setDevMode}
         totalVotes={totalVotes}
       />
@@ -64,8 +65,8 @@ export default function App() {
       {/* Main Content Area */}
       <main className="flex-1">
         
-        {/* Dev OpenRouter Studio Banner if toggled */}
-        {devMode && (
+        {/* Dev OpenRouter Studio Banner if toggled & allowed */}
+        {isDevStudioAllowed && devMode && (
           <DevOpenRouterStudio
             candidatesData={candidatesData}
             onAddCustomCandidate={handleAddCustomCandidate}

@@ -274,7 +274,7 @@ export function cleanAndParseJson(rawText) {
         const parsed = JSON.parse(repaired);
         return sanitizeParsedData(parsed);
       } catch (err3) {
-        // Attempt 4: Lossless Fallback Regex Extractor (Guarantees zero data loss!)
+        // Attempt 4: Lossless Fallback Regex Extractor
         console.warn("JSON.parse failed all syntax repair attempts. Using Lossless Regex Extractor.", err1, err2, err3);
         try {
           return extractPartialDataWithRegex(rawText);
@@ -288,7 +288,7 @@ export function cleanAndParseJson(rawText) {
 }
 
 /**
- * Fallback sanitizer to ensure object properties exist
+ * Fallback sanitizer to ensure object properties exist and ratings scores are properly extracted
  */
 function sanitizeParsedData(data) {
   return {
@@ -328,18 +328,54 @@ function sanitizeParsedData(data) {
 }
 
 function sanitizeValueRatings(ratings = {}) {
-  const keys = [
-    "nationalSecurity", "personalFreedom", "equality", "economicEfficiency",
-    "socialJustice", "traditionAndJewishIdentity", "liberalDemocracy",
-    "governance", "socialUnity", "internationalRelations"
-  ];
+  const keysMap = {
+    nationalSecurity: ["nationalSecurity", "national_security", "security", "ביטחון לאומי"],
+    personalFreedom: ["personalFreedom", "personal_freedom", "freedom", "חופש הפרט"],
+    equality: ["equality", "שוויון"],
+    economicEfficiency: ["economicEfficiency", "economic_efficiency", "efficiency", "יעילות כלכלית"],
+    socialJustice: ["socialJustice", "social_justice", "justice", "צדק חברתי"],
+    traditionAndJewishIdentity: ["traditionAndJewishIdentity", "tradition_and_jewish_identity", "jewishIdentity", "jewish_identity", "זהות יהודית"],
+    liberalDemocracy: ["liberalDemocracy", "liberal_democracy", "democracy", "דמוקרטיה ליברלית"],
+    governance: ["governance", "משילות"],
+    socialUnity: ["socialUnity", "social_unity", "unity", "אחדות חברתית"],
+    internationalRelations: ["internationalRelations", "international_relations", "foreign_relations", "יחסי חוץ"]
+  };
 
   const result = {};
-  keys.forEach(k => {
-    const item = ratings[k] || {};
-    result[k] = {
-      score: typeof item.score === "number" ? Math.min(100, Math.max(0, item.score)) : 50,
-      justification: item.justification || "נימוק חשיבות הערך במערכת השיקולים."
+
+  Object.entries(keysMap).forEach(([canonicalKey, aliases]) => {
+    let rawItem = null;
+    for (const alias of aliases) {
+      if (ratings && ratings[alias] !== undefined) {
+        rawItem = ratings[alias];
+        break;
+      }
+    }
+
+    let score = 50;
+    let justification = "נימוק חשיבות הערך במערכת השיקולים.";
+
+    if (rawItem !== null && rawItem !== undefined) {
+      if (typeof rawItem === 'number') {
+        score = rawItem;
+      } else if (typeof rawItem === 'string' && !isNaN(Number(rawItem))) {
+        score = Number(rawItem);
+      } else if (typeof rawItem === 'object') {
+        const rawScore = rawItem.score ?? rawItem.rating ?? rawItem.value;
+        if (typeof rawScore === 'number') {
+          score = rawScore;
+        } else if (typeof rawScore === 'string' && !isNaN(Number(rawScore))) {
+          score = Number(rawScore);
+        }
+        if (rawItem.justification || rawItem.reason || rawItem.explanation) {
+          justification = rawItem.justification || rawItem.reason || rawItem.explanation;
+        }
+      }
+    }
+
+    result[canonicalKey] = {
+      score: Math.min(100, Math.max(0, Math.round(score))),
+      justification
     };
   });
 

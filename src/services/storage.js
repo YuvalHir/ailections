@@ -208,9 +208,19 @@ export function saveCustomModel(modelData) {
 }
 
 /**
- * Saves dataset directly to physical src/data/modelsData.json on disk via Vite dev server middleware
+ * Saves dataset directly to physical src/data/modelsData.json on disk via Vite dev server middleware.
+ * Strictly blocked outside local dev mode (npm run dev).
  */
 export async function saveToDiskFile(fullDataset) {
+  const isDevMode = typeof import.meta !== 'undefined' && import.meta.env
+    ? (import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEV_STUDIO === 'true')
+    : false;
+
+  if (!isDevMode) {
+    console.warn("Local disk save blocked: only enabled in local dev mode when VITE_ENABLE_DEV_STUDIO=true");
+    return false;
+  }
+
   try {
     const res = await fetch('/api/save-models-data', {
       method: 'POST',
@@ -222,7 +232,7 @@ export async function saveToDiskFile(fullDataset) {
       return true;
     }
   } catch (err) {
-    console.warn('Local disk save middleware not available (only active in dev mode):', err);
+    console.warn('Local disk save middleware not available:', err);
   }
   return false;
 }

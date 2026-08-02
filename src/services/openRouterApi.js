@@ -4,6 +4,10 @@ import { MODEL_RESPONSE_JSON_SCHEMA, cleanAndParseJson } from '../utils/jsonSche
 const OPENROUTER_MODELS_URL = "https://openrouter.ai/api/v1/models";
 const OPENROUTER_COMPLETIONS_URL = "https://openrouter.ai/api/v1/chat/completions";
 
+export const isDevStudioAllowed = typeof import.meta !== 'undefined' && import.meta.env
+  ? import.meta.env.VITE_ENABLE_DEV_STUDIO === 'true'
+  : false;
+
 /**
  * Helper to determine if an OpenRouter model supports web search / grounding
  */
@@ -53,6 +57,10 @@ export function checkModelIsFree(model) {
  * Fetch available models dynamically from OpenRouter OpenAPI endpoint
  */
 export async function fetchOpenRouterModels(searchQuery = '') {
+  if (!isDevStudioAllowed) {
+    return [];
+  }
+
   try {
     const url = searchQuery 
       ? `${OPENROUTER_MODELS_URL}?q=${encodeURIComponent(searchQuery)}`
@@ -93,6 +101,10 @@ export async function fetchOpenRouterModels(searchQuery = '') {
  * Call an AI model via OpenRouter API using Structured Outputs and Response Healing
  */
 export async function runModelPrompt({ apiKey, modelId, modelConfig, isGrounded = false }) {
+  if (!isDevStudioAllowed) {
+    throw new Error("הרצת מודלים מבוטלת בסביבה זו. יש להגדיר VITE_ENABLE_DEV_STUDIO=true בקובץ ה-env.");
+  }
+
   if (!apiKey) {
     throw new Error("נא להזין מפתח API של OpenRouter");
   }

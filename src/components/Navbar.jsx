@@ -1,5 +1,6 @@
 import React from 'react';
 import { Crown, Sparkles, Scale, Terminal, Vote, ShieldCheck } from 'lucide-react';
+import { isDevStudioAllowed } from '../services/openRouterApi';
 
 export default function Navbar({ activeTab, setActiveTab, devMode, setDevMode, totalVotes }) {
   return (
@@ -86,18 +87,20 @@ export default function Navbar({ activeTab, setActiveTab, devMode, setDevMode, t
 
         {/* Action Controls (Left side in RTL) */}
         <div className="flex items-center gap-3 shrink-0">
-          <button
-            onClick={() => setDevMode(!devMode)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all border ${
-              devMode
-                ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-lg shadow-amber-500/20'
-                : 'bg-slate-800/80 text-slate-300 border-slate-700 hover:text-white hover:border-slate-600'
-            }`}
-          >
-            <Terminal className="w-3.5 h-3.5" />
-            <span>Dev Studio</span>
-            {devMode && <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>}
-          </button>
+          {isDevStudioAllowed && (
+            <button
+              onClick={() => setDevMode(!devMode)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all border ${
+                devMode
+                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-lg shadow-amber-500/20'
+                  : 'bg-slate-800/80 text-slate-300 border-slate-700 hover:text-white hover:border-slate-600'
+              }`}
+            >
+              <Terminal className="w-3.5 h-3.5" />
+              <span>Dev Studio</span>
+              {devMode && <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>}
+            </button>
+          )}
         </div>
 
       </div>

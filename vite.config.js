@@ -7,7 +7,15 @@ function localSavePlugin() {
   return {
     name: 'local-save-models-data',
     configureServer(server) {
+      // Strictly active ONLY during local development (npm run dev / vite serve)
       server.middlewares.use('/api/save-models-data', (req, res) => {
+        if (process.env.NODE_ENV === 'production') {
+          res.statusCode = 403;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: "Endpoint disabled in production" }));
+          return;
+        }
+
         if (req.method === 'POST') {
           let body = '';
           req.on('data', chunk => { body += chunk; });
