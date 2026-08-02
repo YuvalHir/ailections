@@ -3,7 +3,6 @@ import { neon } from '@neondatabase/serverless';
 const VOTES_KEY = "ailections_user_votes_2026";
 const VOTED_MODEL_KEY = "ailections_user_voted_model";
 const API_KEY_STORAGE = "ailections_openrouter_key";
-const CUSTOM_MODELS_KEY = "ailections_custom_models";
 
 // Neon Postgres Connection URL (auto-populated by Vercel Neon Integration)
 const POSTGRES_URL = typeof import.meta !== 'undefined' && import.meta.env
@@ -185,26 +184,6 @@ export function getStoredApiKey() {
 
 export function saveStoredApiKey(key) {
   localStorage.setItem(API_KEY_STORAGE, key || "");
-}
-
-export function getCustomModels() {
-  try {
-    const data = localStorage.getItem(CUSTOM_MODELS_KEY);
-    return data ? JSON.parse(data) : [];
-  } catch (e) {
-    return [];
-  }
-}
-
-export function saveCustomModel(modelData) {
-  const existing = getCustomModels();
-  const updated = [modelData, ...existing.filter(m => m.modelId !== modelData.modelId)];
-  try {
-    localStorage.setItem(CUSTOM_MODELS_KEY, JSON.stringify(updated));
-  } catch (e) {
-    console.error("Failed to save custom model", e);
-  }
-  return updated;
 }
 
 /**

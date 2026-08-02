@@ -10,23 +10,25 @@ import DevOpenRouterStudio from './components/DevOpenRouterStudio';
 import Footer from './components/Footer';
 
 import staticModelsData from './data/modelsData.json';
-import { getUserVotes, castVote, getCustomModels, saveCustomModel, fetchAggregateVotes, getUserVotedModel } from './services/storage';
+import { getUserVotes, castVote, fetchAggregateVotes, getUserVotedModel } from './services/storage';
 import { isDevStudioAllowed } from './services/openRouterApi';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('candidates'); // 'candidates' | 'compare' | 'domains' | 'voting'
   const [devMode, setDevMode] = useState(false);
-  const [candidatesData, setCandidatesData] = useState([]);
+  const [candidatesData, setCandidatesData] = useState(staticModelsData);
   const [selectedCandidateModal, setSelectedCandidateModal] = useState(null);
   const [userVotes, setUserVotes] = useState({});
   const [userVotedModel, setUserVotedModel] = useState(null);
 
   // Initialize data on mount
   useEffect(() => {
-    const customModels = getCustomModels();
-    const merged = [...customModels, ...staticModelsData];
-    setCandidatesData(merged);
+    // Clear legacy localStorage custom models to prevent duplication
+    try {
+      localStorage.removeItem("ailections_custom_models");
+    } catch (e) {}
 
+    setCandidatesData(staticModelsData);
     setUserVotedModel(getUserVotedModel());
 
     // Fetch live votes (from Neon Postgres, Vercel KV, or local storage)
@@ -42,8 +44,10 @@ export default function App() {
   };
 
   const handleAddCustomCandidate = (newCandidateData) => {
-    const updatedCustom = saveCustomModel(newCandidateData);
-    setCandidatesData([...updatedCustom, ...staticModelsData]);
+    setCandidatesData(prev => {
+      const filtered = prev.filter(c => c.modelId !== newCandidateData.modelId);
+      return [newCandidateData, ...filtered];
+    });
     setActiveTab('candidates');
     setSelectedCandidateModal(newCandidateData);
   };

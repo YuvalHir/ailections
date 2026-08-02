@@ -64,13 +64,15 @@ export const MODEL_RESPONSE_JSON_SCHEMA = {
 };
 
 /**
- * Replaces unescaped double quotes inside Hebrew acronyms (e.g. ביו"ש, תב"ע, צה"ל, בג"ץ, יו"ש)
+ * Replaces unescaped double quotes inside Hebrew acronyms and titles (e.g. ד"ר, עו"ד, ביו"ש, תב"ע, צה"ל, בג"ץ, יו"ש)
  * with Hebrew Gershayim ״ (U+05F4) so JSON parser doesn't break string boundaries.
  */
 function fixHebrewQuotes(jsonStr) {
   return jsonStr
-    .replace(/([\u0590-\u05FF]+)"([\u0590-\u05FF]+)/g, '$1״$2')
-    .replace(/([\u0590-\u05FF]+)"(?=[\s,.:;\]\}]|$)/g, '$1״');
+    // 1. Any quote between two Hebrew characters (e.g. ד"ר, צה"ל, ביו"ש, תב"ע, בג"ץ, יו"ש)
+    .replace(/([\u0590-\u05FF])"([\u0590-\u05FF])/g, '$1״$2')
+    // 2. Any quote after Hebrew letter followed by Hebrew letter or punctuation
+    .replace(/([\u0590-\u05FF]+)"(?=[\u0590-\u05FF\s,.:;\]\}]|$)/g, '$1״');
 }
 
 /**
@@ -166,7 +168,7 @@ function repairTruncatedJson(str) {
 
 /**
  * Lossless Fallback: Regex-based field extractor when JSON.parse fails completely.
- * Guarantees zero data loss even for malformed LLM outputs.
+ * Guarantees zero data loss and extracts real scores & justifications even for malformed LLM outputs.
  */
 function extractPartialDataWithRegex(rawText) {
   const extractField = (pattern, fallback = "") => {
@@ -194,6 +196,35 @@ function extractPartialDataWithRegex(rawText) {
     }
   }
 
+  // Extract valueRatings scores & justifications via regex
+  const valueRatings = {};
+  const ratingKeys = [
+    "nationalSecurity", "personalFreedom", "equality", "economicEfficiency",
+    "socialJustice", "traditionAndJewishIdentity", "liberalDemocracy",
+    "governance", "socialUnity", "internationalRelations"
+  ];
+
+  ratingKeys.forEach(k => {
+    const objRegex = new RegExp(`"${k}"\\s*:\\s*\\{\\s*"score"\\s*:\\s*(\\d+)(?:[\\s\\S]*?"justification"\\s*:\\s*"([^"]+)")?`, "i");
+    const numRegex = new RegExp(`"${k}"\\s*:\\s*(\\d+)`, "i");
+
+    const mObj = rawText.match(objRegex);
+    if (mObj) {
+      valueRatings[k] = {
+        score: parseInt(mObj[1], 10),
+        justification: mObj[2] || "נימוק חשיבות הערך במערכת השיקולים."
+      };
+    } else {
+      const mNum = rawText.match(numRegex);
+      if (mNum) {
+        valueRatings[k] = {
+          score: parseInt(mNum[1], 10),
+          justification: "נימוק חשיבות הערך במערכת השיקולים."
+        };
+      }
+    }
+  });
+
   // Extract operational platform domains
   const operationalPlatform = [];
   const domainRegex = /\{\s*"domainId"\s*:\s*(\d+)[\s\S]*?"domainTitle"\s*:\s*"([^"]+)"[\s\S]*?"plan"\s*:\s*"([^"]+)"/g;
@@ -213,6 +244,7 @@ function extractPartialDataWithRegex(rawText) {
   return sanitizeParsedData({
     candidate: { name, age, origin, background, personaSummary },
     ideologicalPrinciples: principles.length > 0 ? principles : undefined,
+    valueRatings: Object.keys(valueRatings).length > 0 ? valueRatings : undefined,
     operationalPlatform: operationalPlatform.length > 0 ? operationalPlatform : undefined,
     selfCriticism: {
       strongestCounterArgument: extractField(/"strongestCounterArgument"\s*:\s*"([^"]+)"/, "ביקורת על ריכוזיות וסדרי עדיפויות."),
@@ -251,7 +283,7 @@ export function cleanAndParseJson(rawText) {
     }
   }
 
-  // Pre-fix Hebrew quotes (e.g. ביו"ש -> ביו״ש) and array object braces BEFORE control character sanitization
+  // Pre-fix Hebrew quotes (e.g. ד"ר, ביו"ש -> ד״ר, ביו״ש) and array object braces BEFORE control character sanitization
   const fixedHebrew = fixHebrewQuotes(trimmed);
   const fixedBraces = fixMissingArrayObjectBraces(fixedHebrew);
   const sanitized = sanitizeControlCharacters(fixedBraces);

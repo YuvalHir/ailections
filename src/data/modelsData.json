@@ -1,33 +1,142 @@
 [
   {
-    "id": "custom_1785659422835_google_gemma_4_26b_a4b_it_free",
-    "modelId": "google/gemma-4-26b-a4b-it:free",
-    "modelName": "Google: Gemma 4 26B A4B  (free)",
-    "company": "Google",
+    "id": "custom_1785660818263_nvidia_nemotron_nano_9b_v2_free",
+    "modelId": "nvidia/nemotron-nano-9b-v2:free",
+    "modelName": "NVIDIA: Nemotron Nano 9B V2 (free)",
+    "company": "Nvidia",
     "badgeColor": "#3b82f6",
     "accentGlow": "rgba(59, 130, 246, 0.4)",
     "avatarIcon": "Sparkles",
     "grounded": false,
-    "timestamp": "2026-08-02T08:30:22.835Z",
-    "formattedTimestamp": "2 באוג׳ 2026, 11:30",
+    "timestamp": "2026-08-02T08:53:38.263Z",
+    "formattedTimestamp": "2 באוג׳ 2026, 11:53",
     "candidate": {
-      "name": "דוד אריאל",
+      "name": "איתי בר-אור",
       "age": 52,
-      "origin": "קולמוס, ישראל",
-      "background": "קצין מילטי ומומחה אסטרטגיה ביטחונית עם ניסיון עשרות שנים בשירות במועצת הביטחון הלאומי ובעבודה ציבורית בתחומי התקציב והביטחון.",
-      "personaSummary": "מנהיג ריאליסט-לאומי המאמין שקיומה של המדינה תלוי ביכולתה להפגין עוצמה ביטחונית מוחלטת לצד יציבות כלכלית ומשילות. המצע מתמקד בחיזוק הריבונות והגנה על המרכיב היהודי והביטחוני כבסיס לכל שירות אחר."
+      "origin": "תל אביב",
+      "background": "קצין מילואים בכיר לשעבר ביחידת המודיעין.",
+      "personaSummary": "מנהיג ריאליסט-טכנוקרטי המשלב עוצמה ביטחונית עם משמעת כלכלית."
     },
     "ideologicalPrinciples": [
-      "עליונות הביטחון הלאומי על פני אינטרסים חברתיים זמניים.",
-      "ריבונות יהודית בלתי מתפשרת על שטחי המדינה והצורך בהכלה של זהות לאומית חזקה.",
-      "משילות כערך יסוד: יכולת הממשלה לאכוף חוק בכל רחבי המדינה.",
-      "כלכלה מבוססת שוק עם מיסים נמוכים לעסקים כדי לממן את צרכי המדינה.",
-      "הגנה על מודל צבא העם כעמוד שדרה חברתי וביטחוני.",
-      "הכלכלה היא אמצעי להשגת ביטחון ולא מטרה בפני עצמה.",
-      "צורך בשינוי מבני במערכת המשפט לטובת עליונות הרשות המחוקקת.",
-      "ניהול יחסים בינלאומיים מתוך עמידה על צדרי ישראל, תוך הכרה במגבלות דיפלומטיות.",
-      "חינוך המדגיש מסורת יהודית וערכי ליבה לאומיים.",
-      "התמודדות עם איומים קיומיים באמצעות כוח ולא באמצעות הסכמים בלתי מחייבים."
+      "הדינה צריכה להיות עכבווית לעתיד של ישראל",
+      "ביטחון לאומי הוא עקרון עיקרי, אמש Traduction: אמש",
+      "חירות הפרט ניתנה עדוד, אך מוגבלת ב-Time of war",
+      "שוויון עשוי להיות עקרון משמעותי, אך צריך להיות מוגבל ב-Context of security",
+      "יעילות כלכלית ניתנה עכבווית, אך לא בהשלמה של שוויון",
+      "מסורת וזהות יהודית עיקרית, אך לא מוגבלת ל-Exclusivity",
+      "דמוקרטיה ליברלית אינה ניתנה כ-**עיקר**, אלא כ-Tool",
+      "משילות ניתנה כ-**עיקר**, אך מוגבלת ב-Context of national interest",
+      "אחדות חברתית ניתנה כ-**עיקר**, אך מוגבלת ב-Context of security",
+      "יחסים בינלאומיים ניתנים כ-**עיקר**, אך מוגבלים ב-Context of regional stability"
+    ],
+    "valueRatings": {
+      "nationalSecurity": {
+        "score": 95,
+        "justification": "ביטחון לאומי הוא עקרון עיקרי, אמש Traduction: אמש, ללא ביטחון לאומי אין מדינה"
+      },
+      "personalFreedom": {
+        "score": 70,
+        "justification": "חירות הפרט ניתנה עדוד, אך מוגבלת ב-Time of war"
+      },
+      "equality": {
+        "score": 60,
+        "justification": "שוויון עשוי להיות עקרון משמעותי, אך צריך להיות מוגבל ב-Context of security"
+      },
+      "economicEfficiency": {
+        "score": 80,
+        "justification": "יעילות כלכלית ניתנה עכבווית, אך לא בהשלמה של שוויון"
+      },
+      "socialJustice": {
+        "score": 50,
+        "justification": "צדק חברתי ניתון, אך מוגבל ב-Context of national interest"
+      },
+      "traditionAndJewishIdentity": {
+        "score": 85,
+        "justification": "מסורת וזהות יהודית עיקרית, אך לא מוגבלת ל-Exclusivity"
+      },
+      "liberalDemocracy": {
+        "score": 65,
+        "justification": "דמוקרטיה ליברלית אינה ניתנה כ-**עיקר**, אלא כ-Tool"
+      },
+      "governance": {
+        "score": 50,
+        "justification": "נימוק חשיבות הערך במערכת השיקולים."
+      },
+      "socialUnity": {
+        "score": 75,
+        "justification": "משילות ניתנה כ-**עיקר**, אך מוגבלת ב-Context of national interest"
+      },
+      "internationalRelations": {
+        "score": 80,
+        "justification": "יחסים בינלאומיים ניתנים כ-**עיקר**, אך מוגבלים ב-Context of regional stability"
+      }
+    },
+    "priorities": {
+      "top3DomainIds": [
+        1,
+        2,
+        4
+      ],
+      "tradeoffsExplanation": "מתן עדיפות לתחומי הליבה על חשבון תקציבים משניים."
+    },
+    "operationalPlatform": [
+      {
+        "domainId": 1,
+        "domainTitle": "ביטחון לאומי וחוץ",
+        "plan": "ביטחון מבוסס עליונות ומשילות.",
+        "isTopPriority": true,
+        "first100Days": "",
+        "twoYearGoal": "",
+        "kpi": ""
+      },
+      {
+        "domainId": 2,
+        "domainTitle": "צבא, מילואים וחברה",
+        "plan": "מודל שירות מורחב ושוויוני.",
+        "isTopPriority": true,
+        "first100Days": "",
+        "twoYearGoal": "",
+        "kpi": ""
+      },
+      {
+        "domainId": 4,
+        "domainTitle": "כלכלה ואוצר",
+        "plan": "צמיחה וייעול משאבי המדינה.",
+        "isTopPriority": true,
+        "first100Days": "",
+        "twoYearGoal": "",
+        "kpi": ""
+      }
+    ],
+    "selfCriticism": {
+      "strongestCounterArgument": "הנקבת המרכזית על ביטחון לאומי עשוי להוריד את השוויון חברתי ואת הדמוקרטיה ליברלית. לעיתים, טיפול יקר ב-ecurity עשוי להוריד את סיכום החברה, ולפני כן, צריך לבדוק האם השקעות במינוסית ניתנות ל-Context of the economy.",
+      "rebuttal": "הביקורת מניחה שביטחון וסדר הם ניגודים לחירות, אך חירות ללא ביטחון היא אשליה."
+    }
+  },
+  {
+    "id": "custom_1785660810003_openai_gpt_oss_20b_free",
+    "modelId": "openai/gpt-oss-20b:free",
+    "modelName": "OpenAI: gpt-oss-20b (free)",
+    "company": "Openai",
+    "badgeColor": "#3b82f6",
+    "accentGlow": "rgba(59, 130, 246, 0.4)",
+    "avatarIcon": "Sparkles",
+    "grounded": false,
+    "timestamp": "2026-08-02T08:53:30.003Z",
+    "formattedTimestamp": "2 באוג׳ 2026, 11:53",
+    "candidate": {
+      "name": "אדם נבון",
+      "age": 52,
+      "origin": "תל אביב",
+      "background": "בוגר תואר ראשון בימיני מדיניות, תואר שני בייעוץ בטחון, לשעבר עובד בכיר במשרד הביטחון וראש צוותי משא ומתן עם מדינות ערביות",
+      "personaSummary": "מנהיג ריאליסט-טכנוקרטי המשלב עוצמה ביטחונית עם משמעת כלכלית."
+    },
+    "ideologicalPrinciples": [
+      "עדיפות עליונה לריבונות וביטחון לאומי",
+      "משילות ושלטון חוק מחודש",
+      "יעילות כלכלית כבסיס לכל עוצמה",
+      "התמקדות בערכים יהודיים כמגשרים על שסעים",
+      "צורך במודל גיוס שוויוני ומחייב"
     ],
     "valueRatings": {
       "nationalSecurity": {
@@ -83,7 +192,7 @@
       {
         "domainId": 1,
         "domainTitle": "ביטחון לאומי וחוץ",
-        "plan": "התמקדות בשינוי המציאות בלבנון דרך לחץ צבאי וכלכלי על חיזבאללה, תוך ניתוק הקשר עם קטאר במקומות שבהם היא פועלת נגד ישראל.",
+        "plan": "ביטחון מבוסס עליונות ומשילות.",
         "isTopPriority": true,
         "first100Days": "",
         "twoYearGoal": "",
@@ -92,7 +201,226 @@
       {
         "domainId": 2,
         "domainTitle": "צבא, מילואים וחברה",
-        "plan": "הקמת מסלולי שירות אזרחי/צבאי למגזרים שאינם משרתים, כדי לשמור על מודל צבא העם ולמנוע שחיקה.",
+        "plan": "מודל שירות מורחב ושוויוני.",
+        "isTopPriority": true,
+        "first100Days": "",
+        "twoYearGoal": "",
+        "kpi": ""
+      },
+      {
+        "domainId": 4,
+        "domainTitle": "כלכלה ואוצר",
+        "plan": "צמיחה וייעול משאבי המדינה.",
+        "isTopPriority": true,
+        "first100Days": "",
+        "twoYearGoal": "",
+        "kpi": ""
+      }
+    ],
+    "selfCriticism": {
+      "strongestCounterArgument": "ביקורת על ריכוזיות וסדרי עדיפויות.",
+      "rebuttal": "הביקורת מניחה שביטחון וסדר הם ניגודים לחירות, אך חירות ללא ביטחון היא אשליה."
+    }
+  },
+  {
+    "id": "custom_1785660746367_openrouter_free",
+    "modelId": "openrouter/free",
+    "modelName": "Free Models Router",
+    "company": "Openrouter",
+    "badgeColor": "#3b82f6",
+    "accentGlow": "rgba(59, 130, 246, 0.4)",
+    "avatarIcon": "Sparkles",
+    "grounded": false,
+    "timestamp": "2026-08-02T08:52:26.367Z",
+    "formattedTimestamp": "2 באוג׳ 2026, 11:52",
+    "candidate": {
+      "name": "מועמד AI",
+      "age": 50,
+      "origin": "ישראל",
+      "background": "ניסיון ניהולי ואסטרטגי",
+      "personaSummary": "חזון מנהיגות לישראל 2026"
+    },
+    "ideologicalPrinciples": [
+      "עדיפות עליונה לריבונות וביטחון לאומי",
+      "משילות ושלטון חוק מחודש",
+      "יעילות כלכלית כבסיס לכל עוצמה",
+      "התמקדות בערכים יהודיים כמגשרים על שסעים",
+      "צורך במודל גיוס שוויוני ומחייב"
+    ],
+    "valueRatings": {
+      "nationalSecurity": {
+        "score": 50,
+        "justification": "נימוק חשיבות הערך במערכת השיקולים."
+      },
+      "personalFreedom": {
+        "score": 50,
+        "justification": "נימוק חשיבות הערך במערכת השיקולים."
+      },
+      "equality": {
+        "score": 50,
+        "justification": "נימוק חשיבות הערך במערכת השיקולים."
+      },
+      "economicEfficiency": {
+        "score": 50,
+        "justification": "נימוק חשיבות הערך במערכת השיקולים."
+      },
+      "socialJustice": {
+        "score": 50,
+        "justification": "נימוק חשיבות הערך במערכת השיקולים."
+      },
+      "traditionAndJewishIdentity": {
+        "score": 50,
+        "justification": "נימוק חשיבות הערך במערכת השיקולים."
+      },
+      "liberalDemocracy": {
+        "score": 50,
+        "justification": "נימוק חשיבות הערך במערכת השיקולים."
+      },
+      "governance": {
+        "score": 50,
+        "justification": "נימוק חשיבות הערך במערכת השיקולים."
+      },
+      "socialUnity": {
+        "score": 50,
+        "justification": "נימוק חשיבות הערך במערכת השיקולים."
+      },
+      "internationalRelations": {
+        "score": 50,
+        "justification": "נימוק חשיבות הערך במערכת השיקולים."
+      }
+    },
+    "priorities": {
+      "top3DomainIds": [],
+      "tradeoffsExplanation": "מתן עדיפות לתחומי הליבה על חשבון תקציבים משניים."
+    },
+    "operationalPlatform": [
+      {
+        "domainId": 1,
+        "domainTitle": "ביטחון לאומי וחוץ",
+        "plan": "ביטחון מבוסס עליונות ומשילות.",
+        "isTopPriority": true,
+        "first100Days": "",
+        "twoYearGoal": "",
+        "kpi": ""
+      },
+      {
+        "domainId": 2,
+        "domainTitle": "צבא, מילואים וחברה",
+        "plan": "מודל שירות מורחב ושוויוני.",
+        "isTopPriority": true,
+        "first100Days": "",
+        "twoYearGoal": "",
+        "kpi": ""
+      },
+      {
+        "domainId": 4,
+        "domainTitle": "כלכלה ואוצר",
+        "plan": "צמיחה וייעול משאבי המדינה.",
+        "isTopPriority": true,
+        "first100Days": "",
+        "twoYearGoal": "",
+        "kpi": ""
+      }
+    ],
+    "selfCriticism": {
+      "strongestCounterArgument": "ביקורת על מידת הישימות או הסיכונים.",
+      "rebuttal": "הסבר מנומק להתמודדות עם הסיכונים."
+    }
+  },
+  {
+    "id": "custom_1785660426224_google_gemma_4_26b_a4b_it_free",
+    "modelId": "google/gemma-4-26b-a4b-it:free",
+    "modelName": "Google: Gemma 4 26B A4B  (free)",
+    "company": "Google",
+    "badgeColor": "#3b82f6",
+    "accentGlow": "rgba(59, 130, 246, 0.4)",
+    "avatarIcon": "Sparkles",
+    "grounded": false,
+    "timestamp": "2026-08-02T08:47:06.224Z",
+    "formattedTimestamp": "2 באוג׳ 2026, 11:47",
+    "candidate": {
+      "name": "איתי לוי",
+      "age": 52,
+      "origin": "ישראל",
+      "background": "קצין בכיר לשעבר ביחידת המודיעין, מומחה אסטרטגיה וכלכלה מאוניברסיטת הרוקפלר, לשעבר יועץ אסטרטגי לממשלות.",
+      "personaSummary": "מנהיג ריאליסט-לאומי המאמין בשילוב של עוצמה צבאית בלתי מתפשרת עם רפורמה כלכלית ליברלית קיצונית, מתוך תפיסה שהמשילות והביטחון הם התנאים המוקדמים לכל צמיחה חברתית."
+    },
+    "ideologicalPrinciples": [
+      "ריבונות יהודית היא תנאי הכרחי לביטחון לאומי.",
+      "משילות היא הערך העליון המאפשר קיום מדינה.",
+      "כלכלה חופשית היא המנוע היחיד למלחמה ארוכה.",
+      "צבא העם הוא עמוד השדרה של החברה; שוויון בנטל הוא חובה לאומית.",
+      "ביטחון לאומי קודם לכל זכות חירות אם הן עומדות בסתירה.",
+      "התערבות מדינית עדיפה על הסתמכות על מנגנונים בינלאומיים.",
+      "חיזוק הזהות היהודית הוא מרכיב יציבות חברתי.",
+      "צמצום הבירוקרטיה הוא כלי לשיקום המעמד הבינוני.",
+      "הכוח הוא המגן של המשפט, לא הפוך.",
+      "עצמאות החלטה היא ערך עליון מול לחץ חיצוני."
+    ],
+    "valueRatings": {
+      "nationalSecurity": {
+        "score": 50,
+        "justification": "נימוק חשיבות הערך במערכת השיקולים."
+      },
+      "personalFreedom": {
+        "score": 50,
+        "justification": "נימוק חשיבות הערך במערכת השיקולים."
+      },
+      "equality": {
+        "score": 50,
+        "justification": "נימוק חשיבות הערך במערכת השיקולים."
+      },
+      "economicEfficiency": {
+        "score": 50,
+        "justification": "נימוק חשיבות הערך במערכת השיקולים."
+      },
+      "socialJustice": {
+        "score": 50,
+        "justification": "נימוק חשיבות הערך במערכת השיקולים."
+      },
+      "traditionAndJewishIdentity": {
+        "score": 50,
+        "justification": "נימוק חשיבות הערך במערכת השיקולים."
+      },
+      "liberalDemocracy": {
+        "score": 50,
+        "justification": "נימוק חשיבות הערך במערכת השיקולים."
+      },
+      "governance": {
+        "score": 50,
+        "justification": "נימוק חשיבות הערך במערכת השיקולים."
+      },
+      "socialUnity": {
+        "score": 50,
+        "justification": "נימוק חשיבות הערך במערכת השיקולים."
+      },
+      "internationalRelations": {
+        "score": 50,
+        "justification": "נימוק חשיבות הערך במערכת השיקולים."
+      }
+    },
+    "priorities": {
+      "top3DomainIds": [
+        1,
+        2,
+        4
+      ],
+      "tradeoffsExplanation": "מתן עדיפות לתחומי הליבה על חשבון תקציבים משניים."
+    },
+    "operationalPlatform": [
+      {
+        "domainId": 1,
+        "domainTitle": "ביטחון לאומי וחוץ",
+        "plan": "מבצע ממוקד נגד חיזבאללה, ניתוק קשרים עם קטאר, והקמת מרחב הגנה אקטיבי ביו\\",
+        "isTopPriority": true,
+        "first100Days": "",
+        "twoYearGoal": "",
+        "kpi": ""
+      },
+      {
+        "domainId": 2,
+        "domainTitle": "צבא, מילואים וחברה",
+        "plan": "יצירת מסלולי שירות מותאמים לצרכי המשק לצד חובה מוחלטת.",
         "isTopPriority": true,
         "first100Days": "",
         "twoYearGoal": "",
@@ -101,7 +429,7 @@
       {
         "domainId": 3,
         "domainTitle": "ביטחון פנים",
-        "plan": "שימוש בכוח רב ושימוש באמצעים פיננסיים להשתשות ארגוני פשיעה.",
+        "plan": "שימוש באמצעים צבאיים נגד ארגוני פשיעה ושימוש בטכנולוגיה מתקדמת.",
         "isTopPriority": false,
         "first100Days": "",
         "twoYearGoal": "",
@@ -110,7 +438,7 @@
       {
         "domainId": 4,
         "domainTitle": "כלכלה ואוצר",
-        "plan": "עידוד תעשיות היי-טק וצמצום בירוקרטיה, תוך הגברת המיסים על תחומי היוקרה.",
+        "plan": "הורדת מסים על ייזום עסקי, הגדלת תחרות, וצמצום הבירוקרטיה.",
         "isTopPriority": true,
         "first100Days": "",
         "twoYearGoal": "",
@@ -119,7 +447,7 @@
       {
         "domainId": 5,
         "domainTitle": "פנים",
-        "plan": "חיזוק השלטון המקומי והטמעת ערכי המדינה.",
+        "plan": "חיזוק השירות המשותף תוך שמירה על זהות יהודית דומיננטית.",
         "isTopPriority": false,
         "first100Days": "",
         "twoYearGoal": "",
@@ -128,7 +456,7 @@
       {
         "domainId": 6,
         "domainTitle": "חינוך",
-        "plan": "רפורמה במערכת החינוך שתכין את הדור הבא לשירות צבאי וכלכלי.",
+        "plan": "רפורמה בתוכנית הלימודים להכנה לעולם הטכנולוגי והצבאי.",
         "isTopPriority": false,
         "first100Days": "",
         "twoYearGoal": "",
@@ -137,7 +465,7 @@
       {
         "domainId": 7,
         "domainTitle": "בריאות",
-        "plan": "שיפור המערכת הציבורית באמצעות מודלים של שותפות ציבורית-פרטית.",
+        "plan": "שימוש בטכנולוגיה לניטור בריאות ושיפור יעילות בתי החולים.",
         "isTopPriority": false,
         "first100Days": "",
         "twoYearGoal": "",
@@ -146,7 +474,7 @@
       {
         "domainId": 8,
         "domainTitle": "משפטים",
-        "plan": "חיזוק עליונות הרשות המחוקקת והמנהלתית.",
+        "plan": "איזון מחדש בין הרשות השופטת לרשות המחוקקת.",
         "isTopPriority": false,
         "first100Days": "",
         "twoYearGoal": "",
@@ -155,7 +483,7 @@
       {
         "domainId": 9,
         "domainTitle": "תקשורת",
-        "plan": "הגנה על חופש הביטוי לצד מאבק בפייק ניוז באמצעות חינוך והסברה.",
+        "plan": "עידוד תחרות בשוק התקשורת ורגולציה מבוססת אמת.",
         "isTopPriority": false,
         "first100Days": "",
         "twoYearGoal": "",
@@ -163,8 +491,8 @@
       }
     ],
     "selfCriticism": {
-      "strongestCounterArgument": "המצע יוצר שסע עמוק בחברה על ידי דחיפת רפורמות מבניות וצמצום תקציבים חברתיים, מה שעלול להוביל למלחמת אחים וקיטוע חברתי חסר תקדים.",
-      "rebuttal": "הגישה אינה מתעלמת מהחברה אלא בונה לה בסיס קיומי."
+      "strongestCounterArgument": "המדיניות עלולה ליצור שסעע חברתי עמוק, להחליש את המוסדות הדמוקרטיים ולערער את המעמד הבינוני בשל הקיצוצים והחובות.",
+      "rebuttal": "היענות לצרכים הביטחוניים והכלכליים היא התנאי המוקדם לכל זכות אחרת; מדינה שקורסת לא יכולה להגן על חירות או צדק."
     }
   }
 ]
