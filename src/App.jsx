@@ -61,7 +61,10 @@ export default function App() {
         
         {/* Dev OpenRouter Studio Banner if toggled */}
         {devMode && (
-          <DevOpenRouterStudio onAddCustomCandidate={handleAddCustomCandidate} />
+          <DevOpenRouterStudio
+            candidatesData={candidatesData}
+            onAddCustomCandidate={handleAddCustomCandidate}
+          />
         )}
 
         {/* Tab 1: Candidates View */}
@@ -73,7 +76,7 @@ export default function App() {
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
                 <div>
                   <h2 className="text-2xl sm:text-3xl font-black text-white font-rubik tracking-tight">
-                    נבחרת המועמדים (7 מודלי AI)
+                    נבחרת המועמדים ({candidatesData.length} מודלי AI)
                   </h2>
                   <p className="text-xs sm:text-sm text-slate-400 mt-1">
                     לחץ על כרטיס מועמד לצפייה במצע האופרטיבי המלא, 100 ימי פעילות, וביקורת עצמית

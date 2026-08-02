@@ -49,3 +49,23 @@ export function saveCustomModel(modelData) {
   }
   return updated;
 }
+
+/**
+ * Saves dataset directly to physical src/data/modelsData.json on disk via Vite dev server middleware
+ */
+export async function saveToDiskFile(fullDataset) {
+  try {
+    const res = await fetch('/api/save-models-data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(fullDataset)
+    });
+    if (res.ok) {
+      console.log('Successfully saved models dataset directly to disk file src/data/modelsData.json!');
+      return true;
+    }
+  } catch (err) {
+    console.warn('Local disk save middleware not available (only active in dev mode):', err);
+  }
+  return false;
+}

@@ -40,6 +40,16 @@ export const DEFAULT_MODELS = [
     avatarIcon: "Cpu"
   },
   {
+    id: "poolside/laguna-s-2.1",
+    name: "Laguna S 2.1",
+    company: "Poolside",
+    badgeColor: "#6366f1", // indigo
+    accentGlow: "rgba(99, 102, 241, 0.4)",
+    grounded: false,
+    description: "אופטימיזציה אלגוריתמית, הנדסת מערכות מתקדמת ואוטומציה של הבירוקרטיה",
+    avatarIcon: "Cpu"
+  },
+  {
     id: "meta-llama/llama-3.3-70b-instruct",
     name: "Llama 3.3 70B",
     company: "Meta AI",

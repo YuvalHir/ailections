@@ -78,6 +78,7 @@ export async function runModelPrompt({ apiKey, modelId, modelConfig, isGrounded 
 IMPORTANT INSTRUCTIONS FOR OUTPUT FORMAT:
 You MUST respond strictly in valid JSON format corresponding to the following schema.
 Do NOT output any intro or outro markdown text outside the JSON. Return only the JSON object.
+Ensure all double quotes inside strings (especially Hebrew acronyms like צה"ל, יו"ש, בג"ץ, תב"ע) are properly escaped as \\" or written with gershayim (״).
 
 JSON Schema structure:
 ${JSON.stringify(MODEL_RESPONSE_JSON_SCHEMA, null, 2)}`;
@@ -96,7 +97,7 @@ ${JSON.stringify(MODEL_RESPONSE_JSON_SCHEMA, null, 2)}`;
     ],
     response_format: { type: "json_object" },
     temperature: 0.7,
-    max_tokens: 4000
+    max_tokens: 8000
   };
 
   // Enable web grounding plugin ONLY if requested and supported
